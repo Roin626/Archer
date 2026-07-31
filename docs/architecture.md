@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.9 seconds
-Output:
 # 妯″潡鍖栨灦鏋?
 
 ## 鐩爣
