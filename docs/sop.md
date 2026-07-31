@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.9 seconds
-Output:
 # 瀹炲皠钀界偣璁板綍 SOP
 
 ## 1. 寤烘。
