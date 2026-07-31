@@ -72,4 +72,3 @@ final cut instruction. Measure a long shaft at full draw before cutting.
   https://goldtip.com/pages/spine-selector
 - K. et al., Dynamic Characterization of Arrows through Stochastic Perturbation:
   https://arxiv.org/abs/1909.08186
-
