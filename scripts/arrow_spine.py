@@ -270,4 +270,3 @@ def print_table(rows: Sequence[ArrowBuildResult]) -> None:
 
 if __name__ == "__main__":
     raise SystemExit(run(build_parser().parse_args()))
-
