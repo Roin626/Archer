@@ -265,7 +265,12 @@
   }
 
   function calculateStaticSpineScreening(input) {
-    var referenceDeflectionIn = positiveNumber(input.referenceDeflectionIn, "基准箭静态挠度");
+    var referenceDeflectionIn = input.referenceAtaSpine === "" || input.referenceAtaSpine == null
+      ? positiveNumber(input.referenceDeflectionIn, "基准箭静态挠度")
+      : positiveNumber(input.referenceAtaSpine, "基准箭 ATA Spine") / 1000;
+    if (referenceDeflectionIn > 2) {
+      throw new Error("基准箭静态挠度必须以英寸填写（例如 0.600），或改填 ATA Spine 编号（例如 600）");
+    }
     var referenceShaftLengthIn = positiveNumber(input.referenceShaftLengthIn, "基准箭杆长");
     var referenceDrawWeightLb = positiveNumber(input.referenceDrawWeightLb, "基准箭实测拉重");
     var targetShaftLengthIn = positiveNumber(input.targetShaftLengthIn, "测试箭杆长");
@@ -322,7 +327,7 @@
     var drawLengths = parseNumberList(input.drawLengths);
     var rows = [];
     var hasReferenceArrow = [
-      input.referenceDeflectionIn,
+      input.referenceAtaSpine || input.referenceDeflectionIn,
       input.referenceShaftLengthIn,
       input.referenceDrawWeightLb
     ].every(function (value) { return String(value == null ? "" : value).trim() !== ""; });
@@ -330,6 +335,7 @@
       drawLengths.forEach(function (drawLength) {
         var testShaftLengthIn = drawLength + 1;
         var spineScreening = hasReferenceArrow ? calculateStaticSpineScreening({
+          referenceAtaSpine: input.referenceAtaSpine,
           referenceDeflectionIn: input.referenceDeflectionIn,
           referenceShaftLengthIn: input.referenceShaftLengthIn,
           referenceDrawWeightLb: input.referenceDrawWeightLb,
