@@ -7,6 +7,8 @@ from scripts.arrow_spine import (
     compound_chart_effective_weight,
     flexural_rigidity_lb_in2,
     normalize_bow_type,
+    minimum_point_system_weight_for_gpp,
+    static_spine_screening_band,
     static_deflection_from_flexural_rigidity,
 )
 
@@ -39,6 +41,13 @@ class ArrowBuildTests(unittest.TestCase):
         self.assertEqual(result.gpp, 9.5)
         self.assertTrue(result.minimum_weight_passes)
         self.assertEqual(result.ata_spine, 500)
+        self.assertEqual(result.minimum_point_system_weight_gr, 100)
+
+    def test_gpp_point_system_minimum_is_a_mass_safety_calculation(self):
+        self.assertEqual(minimum_point_system_weight_for_gpp(40, 29, 8, 28, 9), 100)
+
+    def test_calibrated_static_spine_screening_scales_force_and_length(self):
+        self.assertEqual(static_spine_screening_band(0.5, 30, 30, 30, 30), (438, 500, 563))
 
     def test_compound_chart_adjustment_is_limited_to_easton_chart_rule(self):
         self.assertEqual(compound_chart_effective_weight(60, 150), 66)
