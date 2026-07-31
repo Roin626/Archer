@@ -159,6 +159,14 @@
               <input id="equipmentArrowPassOffset" type="number" min="0" step="1" value="25">
             </label>
             <label>
+              箭头系统总重 gr
+              <input id="equipmentPointSystemWeight" type="number" min="0" max="1000" step="1" value="100">
+            </label>
+            <label>
+              箭杆来源 / 型号（可选）
+              <input id="equipmentShaftModel" type="text" placeholder="例如：自制碳箭 / Easton Avance 600">
+            </label>
+            <label>
               基准箭 ATA 静态 Spine
               <input id="equipmentReferenceAtaSpine" type="number" min="100" max="1500" step="1" placeholder="例如：600">
             </label>
@@ -175,7 +183,7 @@
               <input id="equipmentScreeningBand" type="number" min="1" max="50" step="0.5" value="12.5">
             </label>
           </form>
-          <p class="form-hint">基准箭应已在相近箭头系统重量、箭台和撒放条件下调通。筛选带只用于缩小厂商 chart 的候选范围，不是最终动态 spine 结论。</p>
+          <p class="form-hint">基准箭应已在相近箭头系统重量、箭台和撒放条件下调通。筛选带用于缩小候选范围；有厂商 chart 时可交叉核对，没有时以相邻候选裸杆调校验证。</p>
           <div class="toolbar">
             <button id="equipmentButton" type="button">生成配置</button>
           </div>
@@ -189,7 +197,7 @@
                   <th>拉距</th>
                   <th>箭长</th>
                   <th>ATA 静态 Spine 筛选范围</th>
-                  <th>箭头</th>
+                  <th>选箭复核数据</th>
                   <th>碳箭 spine</th>
                   <th>成品箭重</th>
                   <th>最低箭重</th>
@@ -230,8 +238,8 @@
               <input id="spinePointWeight" type="number" min="20" max="1000" step="5" value="100">
             </label>
             <label>
-              箭杆厂商 / 型号
-              <input id="spineShaftModel" type="text" placeholder="例如：Easton Avance 600">
+              箭杆来源 / 型号（可选）
+              <input id="spineShaftModel" type="text" placeholder="例如：自制碳箭 / Easton Avance 600">
             </label>
             <label>
               箭材
@@ -268,8 +276,8 @@
       </section>
     </main>
 
-    <script src="src/model.0ec2c8a.js"></script>
+    <script src="src/model.1671d47.js"></script>
     <script src="src/storage.js"></script>
-    <script src="src/app.0ec2c8a.js"></script>
+    <script src="src/app.1671d47.js"></script>
   </body>
 </html>
