@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.9 seconds
-Output:
 import unittest
 
 from scripts.equipment_config import build_matrix, recommend_equipment, test_shaft_length
