@@ -222,12 +222,12 @@
 
   function chartNextStep(bowType) {
     if (bowType === "compound") {
-      return "用所选箭杆厂商的复合弓 chart：实测峰值拉重、箭长、总箭头系统重量、凸轮/弦距、撒放方式。";
+      return "如有厂商复合弓 chart，可用实测峰值拉重、箭长、总箭头系统重量、凸轮/弦距和撒放方式交叉核对；没有时从相邻候选开始纸调或裸杆验证。";
     }
     if (bowType === "shelfless_traditional") {
-      return "记录满拉实测拉重、出箭点距中心线和箭长；按所选厂商传统弓 chart 取相邻两档试箭，再用裸杆验证。";
+      return "记录满拉实测拉重、出箭点距中心线和箭长；有厂商传统弓 chart 时可取相邻两档试箭，没有时用相邻候选进行裸杆验证。";
     }
-    return "用所选箭杆厂商的 chart：实测拉重、其定义的箭长、总箭头系统重量；再以裸杆或纸调验证。";
+    return "如有厂商 chart，可按实测拉重、其定义的箭长和总箭头系统重量交叉核对；没有时从相邻候选开始，用裸杆或纸调验证。";
   }
 
   function calculateArrowBuild(input) {
