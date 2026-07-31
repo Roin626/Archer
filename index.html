@@ -1,0 +1,256 @@
+Exit code: 0
+Wall time: 0.8 seconds
+Output:
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Archer 钀界偣璁板綍</title>
+    <link rel="stylesheet" href="src/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="panel setup-panel">
+        <div class="panel-heading">
+          <h1>瀹炲皠钀界偣璁板綍</h1>
+          <p>璁板綍姣忔敮绠殑钀界偣銆佺鍨嬪拰瀹為獙鏉′欢锛屼负鍚庣画璋冨紦鍒嗘瀽鎻愪緵鏁版嵁銆?/p>
+        </div>
+
+        <form id="sessionForm" class="setup-grid">
+          <label>
+            寮撳瀷
+            <select id="bowType">
+              <option value="recurve">鍙嶆洸</option>
+              <option value="compound">澶嶅悎</option>
+              <option value="barebow">鍏夊紦</option>
+              <option value="american_hunting">缇庣寧</option>
+              <option value="shelfless_traditional">鏃犲彴浼犵粺寮?/option>
+            </select>
+          </label>
+
+          <label>
+            璺濈
+            <span class="inline-fields">
+              <input id="distanceValue" type="number" min="1" step="1" value="18">
+              <select id="distanceUnit">
+                <option value="m">m</option>
+                <option value="yd">yd</option>
+              </select>
+            </span>
+          </label>
+
+          <label>
+            闈堕潰鐩村緞 cm
+            <input id="targetSizeCm" type="number" min="20" step="1" value="40">
+          </label>
+
+          <label>
+            鐜暟
+            <input id="ringCount" type="number" min="5" max="12" step="1" value="10">
+          </label>
+
+          <label class="wide">
+            鏈鐩爣
+            <input id="goal" type="text" placeholder="渚嬪锛氳８鏉嗕笌缇界涓績鍋忓樊">
+          </label>
+
+          <label class="wide">
+            鍣ㄦ潗鐘舵€?
+            <textarea id="setupNotes" rows="3" placeholder="纾呮暟銆佺闀裤€佺閲嶃€佹寜閽€佸鸡璺濄€乶ocking point 绛?></textarea>
+          </label>
+
+          <label class="wide">
+            鐜澶囨敞
+            <textarea id="conditionNotes" rows="2" placeholder="椋庛€佸厜绾裤€佹俯婀垮害銆佸満鍦版儏鍐?></textarea>
+          </label>
+        </form>
+
+        <div class="toolbar">
+          <button id="newSessionButton" type="button">鏂板缓 session</button>
+          <button id="saveButton" type="button">淇濆瓨</button>
+          <button id="undoButton" type="button">鎾ら攢涓婁竴绠?/button>
+          <button id="clearButton" type="button" class="danger">娓呯┖钀界偣</button>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <div class="panel target-panel">
+          <div class="shot-controls">
+            <label>
+              绠瀷
+              <select id="shotKind">
+                <option value="fletched">Fletched 缇界</option>
+                <option value="bareshaft">Bare shaft 瑁告潌</option>
+                <option value="test">Test 娴嬭瘯</option>
+              </select>
+            </label>
+            <label>
+              鍗曠澶囨敞
+              <input id="shotNote" type="text" placeholder="鍙€?>
+            </label>
+          </div>
+
+          <button id="target" class="target" type="button" aria-label="鐐瑰嚮闈堕潰璁板綍钀界偣">
+            <span class="crosshair horizontal"></span>
+            <span class="crosshair vertical"></span>
+          </button>
+        </div>
+
+        <aside class="panel analysis-panel">
+          <h2>缁熻</h2>
+          <dl id="summary" class="summary"></dl>
+
+          <div class="export-actions">
+            <button id="jsonButton" type="button">瀵煎嚭 JSON</button>
+            <button id="csvButton" type="button">瀵煎嚭 CSV</button>
+          </div>
+
+          <h2>钀界偣鍒楄〃</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>绫诲瀷</th>
+                  <th>鐜?/th>
+                  <th>X</th>
+                  <th>Y</th>
+                  <th>澶囨敞</th>
+                </tr>
+              </thead>
+              <tbody id="shotTable"></tbody>
+            </table>
+          </div>
+        </aside>
+      </section>
+
+      <section class="tool-grid">
+        <section class="panel tool-panel">
+          <div class="panel-heading compact-heading">
+            <h2>閰嶄欢閰嶇疆鐭╅樀</h2>
+          </div>
+          <form id="equipmentForm" class="setup-grid tool-form">
+            <label>
+              寮撳瀷
+              <select id="equipmentBowType">
+                <option value="olympic_recurve">濂ュ弽</option>
+                <option value="barebow">鍏夊紦</option>
+                <option value="compound">澶嶅悎</option>
+                <option value="american_hunting">缇庣寧</option>
+                <option value="shelfless_traditional">鏃犲彴浼犵粺寮?/option>
+              </select>
+            </label>
+            <label>
+              鎷夐噸
+              <input id="equipmentDrawWeights" type="text" value="26:40:2">
+            </label>
+            <label>
+              AMO 鎷夎窛
+              <input id="equipmentDrawLengths" type="text" value="26,28,30">
+            </label>
+            <label>
+              绠潗
+              <select id="equipmentMaterial">
+                <option value="carbon">纰崇</option>
+                <option value="wood">鏈ㄧ</option>
+                <option value="bamboo">绔圭</option>
+              </select>
+            </label>
+            <label>
+              鍑虹鐐硅窛涓績绾?mm
+              <input id="equipmentArrowPassOffset" type="number" min="0" step="1" value="25">
+            </label>
+          </form>
+          <div class="toolbar">
+            <button id="equipmentButton" type="button">鐢熸垚閰嶇疆</button>
+          </div>
+          <p id="equipmentError" class="form-error" role="alert"></p>
+          <div class="table-wrap tool-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>寮撳瀷</th>
+                  <th>鎷夐噸</th>
+                  <th>鎷夎窛</th>
+                  <th>绠暱</th>
+                  <th>绠ご</th>
+                  <th>纰崇 spine</th>
+                  <th>鎴愬搧绠噸</th>
+                  <th>鏈€浣庣閲?/th>
+                  <th>Nocking</th>
+                  <th>绠彴/涓績灏勫嚭</th>
+                </tr>
+              </thead>
+              <tbody id="equipmentTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel tool-panel">
+          <div class="panel-heading compact-heading">
+            <h2>Spine 鎺ㄨ崘</h2>
+          </div>
+          <form id="spineForm" class="setup-grid tool-form">
+            <label>
+              寮撳瀷
+              <select id="spineBowType">
+                <option value="olympic_recurve">濂ュ弽</option>
+                <option value="barebow">鍏夊紦</option>
+                <option value="compound">澶嶅悎</option>
+                <option value="american_hunting">缇庣寧</option>
+                <option value="shelfless_traditional">鏃犲彴浼犵粺寮?/option>
+              </select>
+            </label>
+            <label>
+              鎷夐噸 lb
+              <input id="spineDrawWeight" type="number" min="5" step="0.5" value="30">
+            </label>
+            <label>
+              绠暱 in
+              <input id="spineArrowLength" type="number" min="10" step="0.25" value="30">
+            </label>
+            <label>
+              绠ご gr
+              <input id="spinePointWeight" type="number" min="20" max="1000" step="5" value="100">
+            </label>
+            <label>
+              绠潗
+              <select id="spineMaterial">
+                <option value="carbon">纰崇</option>
+                <option value="wood">鏈ㄧ</option>
+                <option value="bamboo">绔圭</option>
+              </select>
+            </label>
+            <label>
+              Shaft GPI
+              <input id="spineShaftGpi" type="number" min="0.1" max="100" step="0.1" value="8">
+            </label>
+            <label>
+              Rear components gr
+              <input id="spineRearComponentsWeight" type="number" min="0" max="1000" step="1" value="25">
+            </label>
+            <label>
+              Static deflection in (optional)
+              <input id="spineStaticDeflection" type="number" min="0.01" max="5" step="0.001" value="0.500">
+            </label>
+            <label>
+              Bow maker minimum GPP (optional)
+              <input id="spineManufacturerMinGpp" type="number" min="0.1" max="50" step="0.1" placeholder="Manual value">
+            </label>
+          </form>
+          <div class="toolbar">
+            <button id="spineButton" type="button">璁＄畻 spine</button>
+          </div>
+          <p id="spineError" class="form-error" role="alert"></p>
+          <dl id="spineSummary" class="summary tool-summary"></dl>
+        </section>
+      </section>
+    </main>
+
+    <script src="src/model.js"></script>
+    <script src="src/storage.js"></script>
+    <script src="src/app.js"></script>
+  </body>
+</html>
+
