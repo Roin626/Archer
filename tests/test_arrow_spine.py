@@ -49,6 +49,10 @@ class ArrowBuildTests(unittest.TestCase):
     def test_calibrated_static_spine_screening_scales_force_and_length(self):
         self.assertEqual(static_spine_screening_band(0.5, 30, 30, 30, 30), (438, 500, 563))
 
+    def test_screening_rejects_an_ata_spine_number_when_inches_are_expected(self):
+        with self.assertRaises(ValueError):
+            static_spine_screening_band(600, 30, 30, 30, 30)
+
     def test_compound_chart_adjustment_is_limited_to_easton_chart_rule(self):
         self.assertEqual(compound_chart_effective_weight(60, 150), 66)
 
