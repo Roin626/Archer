@@ -180,8 +180,8 @@ def static_spine_screening_band(
         target_draw_weight_lb,
         band_percent,
     ]
-    if any(value <= 0 for value in values) or band_percent >= 100:
-        raise ValueError("screening inputs must be positive and the band must be below 100%")
+    if any(value <= 0 for value in values) or band_percent >= 100 or reference_deflection_in > 2:
+        raise ValueError("screening inputs must be positive, deflection must be at most 2 in, and the band must be below 100%")
     center_deflection = (
         reference_deflection_in
         * reference_draw_weight_lb
