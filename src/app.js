@@ -38,6 +38,7 @@
       spineDrawWeight: document.getElementById("spineDrawWeight"),
       spineArrowLength: document.getElementById("spineArrowLength"),
       spinePointWeight: document.getElementById("spinePointWeight"),
+      spineShaftModel: document.getElementById("spineShaftModel"),
       spineMaterial: document.getElementById("spineMaterial"),
       spineShaftGpi: document.getElementById("spineShaftGpi"),
       spineRearComponentsWeight: document.getElementById("spineRearComponentsWeight"),
@@ -259,6 +260,7 @@
       elements.spineError.textContent = "";
       elements.spineSummary.innerHTML = "";
       addDefinitionRow(elements.spineSummary, "弓型", displayBowType(result.bowType));
+      addDefinitionRow(elements.spineSummary, "箭杆厂商 / 型号", elements.spineShaftModel.value.trim() || "未填写");
       addDefinitionRow(elements.spineSummary, "成品箭重", result.finishedArrowWeightGr + " gr");
       addDefinitionRow(elements.spineSummary, "GPP", result.gpp);
       addDefinitionRow(elements.spineSummary, "弓厂最低 GPP", result.manufacturerMinGpp == null ? "未填写" : result.manufacturerMinGpp + " GPP：" + (result.minimumWeightPasses ? "通过" : "不通过"));
