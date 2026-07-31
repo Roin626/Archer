@@ -31,7 +31,7 @@
       equipmentDrawLengths: document.getElementById("equipmentDrawLengths"),
       equipmentMaterial: document.getElementById("equipmentMaterial"),
       equipmentArrowPassOffset: document.getElementById("equipmentArrowPassOffset"),
-      equipmentReferenceDeflection: document.getElementById("equipmentReferenceDeflection"),
+      equipmentReferenceAtaSpine: document.getElementById("equipmentReferenceAtaSpine"),
       equipmentReferenceShaftLength: document.getElementById("equipmentReferenceShaftLength"),
       equipmentReferenceDrawWeight: document.getElementById("equipmentReferenceDrawWeight"),
       equipmentScreeningBand: document.getElementById("equipmentScreeningBand"),
@@ -228,7 +228,7 @@
         drawWeights: elements.equipmentDrawWeights.value,
         drawLengths: elements.equipmentDrawLengths.value,
         arrowPassOffsetMm: arrowPassOffsetMm,
-        referenceDeflectionIn: elements.equipmentReferenceDeflection.value,
+        referenceAtaSpine: elements.equipmentReferenceAtaSpine.value,
         referenceShaftLengthIn: elements.equipmentReferenceShaftLength.value,
         referenceDrawWeightLb: elements.equipmentReferenceDrawWeight.value,
         screeningBandPercent: elements.equipmentScreeningBand.value
