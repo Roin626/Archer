@@ -31,6 +31,10 @@
       equipmentDrawLengths: document.getElementById("equipmentDrawLengths"),
       equipmentMaterial: document.getElementById("equipmentMaterial"),
       equipmentArrowPassOffset: document.getElementById("equipmentArrowPassOffset"),
+      equipmentReferenceDeflection: document.getElementById("equipmentReferenceDeflection"),
+      equipmentReferenceShaftLength: document.getElementById("equipmentReferenceShaftLength"),
+      equipmentReferenceDrawWeight: document.getElementById("equipmentReferenceDrawWeight"),
+      equipmentScreeningBand: document.getElementById("equipmentScreeningBand"),
       equipmentButton: document.getElementById("equipmentButton"),
       equipmentError: document.getElementById("equipmentError"),
       equipmentTable: document.getElementById("equipmentTable"),
@@ -218,12 +222,16 @@
   function renderEquipmentMatrix() {
     try {
       var arrowPassOffsetMm = Number(elements.equipmentArrowPassOffset.value || 0);
-      setTableHeaders(elements.equipmentTable, ["弓型", "拉重", "AMO 拉距", "测试箭杆", "厂商 chart 输入项", "Nocking", "箭台 / 中心射出"]);
+      setTableHeaders(elements.equipmentTable, ["弓型", "拉重", "AMO 拉距", "测试箭杆", "ATA 静态 Spine 筛选范围", "厂商 chart 输入项", "Nocking", "箭台 / 中心射出"]);
       var rows = window.ArcherModel.buildEquipmentMatrix({
         bowType: elements.equipmentBowType.value,
         drawWeights: elements.equipmentDrawWeights.value,
         drawLengths: elements.equipmentDrawLengths.value,
-        arrowPassOffsetMm: arrowPassOffsetMm
+        arrowPassOffsetMm: arrowPassOffsetMm,
+        referenceDeflectionIn: elements.equipmentReferenceDeflection.value,
+        referenceShaftLengthIn: elements.equipmentReferenceShaftLength.value,
+        referenceDrawWeightLb: elements.equipmentReferenceDrawWeight.value,
+        screeningBandPercent: elements.equipmentScreeningBand.value
       });
 
       elements.equipmentError.textContent = "";
@@ -234,6 +242,7 @@
           row.drawWeightLb,
           row.drawLengthAmoIn,
           row.testShaftLengthIn + " in",
+          formatSpineScreening(row.spineScreening),
           row.chartInputs,
           row.nockingPoint,
           "offset " + arrowPassOffsetMm + " mm; " + row.rest + "; " + row.centerShot
@@ -264,6 +273,7 @@
       addDefinitionRow(elements.spineSummary, "成品箭重", result.finishedArrowWeightGr + " gr");
       addDefinitionRow(elements.spineSummary, "GPP", result.gpp);
       addDefinitionRow(elements.spineSummary, "弓厂最低 GPP", result.manufacturerMinGpp == null ? "未填写" : result.manufacturerMinGpp + " GPP：" + (result.minimumWeightPasses ? "通过" : "不通过"));
+      addDefinitionRow(elements.spineSummary, "满足最低 GPP 所需箭头系统重", result.minimumPointSystemWeightGr == null ? "填写弓厂最低 GPP 后计算" : result.minimumPointSystemWeightGr + " gr（安全下限）");
       addDefinitionRow(elements.spineSummary, "ATA 静态 Spine", result.ataSpine == null ? "未填写" : result.ataSpine + "（挠度 " + result.staticDeflectionIn + " in）");
       addDefinitionRow(elements.spineSummary, "EI", result.flexuralRigidityLbIn2 == null ? "not entered" : result.flexuralRigidityLbIn2 + " lb in2");
       addDefinitionRow(elements.spineSummary, "Chart 等效拉重", result.chartEffectiveDrawWeightLb + " lb");
@@ -271,6 +281,13 @@
     } catch (error) {
       elements.spineError.textContent = error.message;
     }
+  }
+
+  function formatSpineScreening(screening) {
+    if (!screening) {
+      return "填写基准箭后生成";
+    }
+    return screening.lowerAtaSpine + "-" + screening.upperAtaSpine + "（中心 " + screening.centerAtaSpine + "，±" + screening.bandPercent + "%）";
   }
 
   function addTableRow(body, values) {
