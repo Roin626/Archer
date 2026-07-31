@@ -141,29 +141,29 @@
 
   var baselineTuning = {
     american_hunting: {
-      rest: "shelf/鐨彴",
-      nockingPoint: "+1/4 鍒?+1/2 in",
-      centerShot: "鏈夊紦绐楃編寮忕寧寮擄紝鎸夊紦绐楃涓績绋嬪害閫夋嫨鐩搁偦 spine 璇曠"
+      rest: "shelf/皮台",
+      nockingPoint: "+1/4 到 +1/2 in",
+      centerShot: "有弓窗美式猎弓，按弓窗离中心程度选择相邻 spine 试箭"
     },
     barebow: {
-      rest: "纾佹€х鍙?+ 涓瓑鍘嬪姏 plunger",
-      nockingPoint: "+1/8 鍒?+1/4 in",
-      centerShot: "绠皷鐣ュ湪寮︾嚎澶栦晶锛屾寜瑁告潌涓績寰皟"
+      rest: "磁性箭台 + 中等压力 plunger",
+      nockingPoint: "+1/8 到 +1/4 in",
+      centerShot: "箭尖略在弦线外侧，按裸杆中心微调"
     },
     compound: {
-      rest: "drop-away 鎴?blade rest",
-      nockingPoint: "姘村钩鍒?+1/8 in",
-      centerShot: "浠庡巶瀹朵腑蹇冨皠鍑鸿捣姝ワ紝鍐嶇敤绾歌皟/璧扮嚎寰皟"
+      rest: "drop-away 或 blade rest",
+      nockingPoint: "水平到 +1/8 in",
+      centerShot: "从厂家中心射出起步，再用纸调/走线微调"
     },
     olympic_recurve: {
-      rest: "纾佹€х鍙?+ 涓瓑鍘嬪姏 plunger",
-      nockingPoint: "+1/8 鍒?+1/4 in",
-      centerShot: "绠皷鐣ュ湪寮︾嚎澶栦晶锛屽厛瑁告潌鍐?walk-back"
+      rest: "磁性箭台 + 中等压力 plunger",
+      nockingPoint: "+1/8 到 +1/4 in",
+      centerShot: "箭尖略在弦线外侧，先裸杆再 walk-back"
     },
     shelfless_traditional: {
-      rest: "鏃犲紦绐楋紝鎼鎵?铏庡彛渚?,
-      nockingPoint: "+3/8 鍒?+3/4 in",
-      centerShot: "鏃犲彴浼犵粺寮擄紝娴嬮噺鍑虹鐐硅窛涓績绾垮苟鐢ㄧ浉閭?spine 璇曠"
+      rest: "无弓窗，搭箭手/虎口侧",
+      nockingPoint: "+3/8 到 +3/4 in",
+      centerShot: "无台传统弓，测量出箭点距中心线并用相邻 spine 试箭"
     }
   };
 
@@ -171,7 +171,7 @@
     var normalized = String(bowType || "").trim().toLowerCase();
     var bowType = bowTypeAliases[normalized] || normalized;
     if (["american_hunting", "barebow", "compound", "olympic_recurve", "shelfless_traditional"].indexOf(bowType) === -1) {
-      throw new Error("涓嶆敮鎸佺殑寮撳瀷: " + bowType);
+      throw new Error("不支持的弓型: " + bowType);
     }
     return bowType;
   }
@@ -179,15 +179,15 @@
   function parseNumberList(raw) {
     var text = String(raw || "").trim();
     if (!text) {
-      throw new Error("璇疯緭鍏ユ暟鍊?);
+      throw new Error("请输入数值");
     }
     if (text.indexOf(":") !== -1) {
       var parts = text.split(":").map(function (part) { return Number(part); });
       if (parts.length !== 3 || parts.some(function (value) { return !Number.isFinite(value); })) {
-        throw new Error("鑼冨洿鏍煎紡搴斾负 start:stop:step");
+        throw new Error("范围格式应为 start:stop:step");
       }
       if (parts[2] <= 0) {
-        throw new Error("鑼冨洿姝ラ暱蹇呴』澶т簬 0");
+        throw new Error("范围步长必须大于 0");
       }
       var values = [];
       for (var current = parts[0]; current <= parts[1] + 1e-9; current += parts[2]) {
@@ -199,7 +199,7 @@
       .map(function (part) { return Number(part.trim()); })
       .filter(function (value) { return Number.isFinite(value); });
     if (!parsed.length) {
-      throw new Error("璇疯緭鍏ラ€楀彿鍒嗛殧鏁板€?);
+      throw new Error("请输入逗号分隔数值");
     }
     return parsed;
   }
@@ -207,7 +207,7 @@
   function positiveNumber(value, label) {
     var number = Number(value);
     if (!Number.isFinite(number) || number <= 0) {
-      throw new Error(label + "蹇呴』澶т簬 0");
+      throw new Error(label + "必须大于 0");
     }
     return number;
   }
@@ -215,31 +215,31 @@
   function nonNegativeNumber(value, label) {
     var number = Number(value || 0);
     if (!Number.isFinite(number) || number < 0) {
-      throw new Error(label + "涓嶈兘涓鸿礋鏁?);
+      throw new Error(label + "不能为负数");
     }
     return number;
   }
 
   function chartNextStep(bowType) {
     if (bowType === "compound") {
-      return "鐢ㄦ墍閫夌鏉嗗巶鍟嗙殑澶嶅悎寮?chart锛氬疄娴嬪嘲鍊兼媺閲嶃€佺闀裤€佹€荤澶寸郴缁熼噸閲忋€佸嚫杞?寮﹁窛銆佹拻鏀炬柟寮忋€?;
+      return "用所选箭杆厂商的复合弓 chart：实测峰值拉重、箭长、总箭头系统重量、凸轮/弦距、撒放方式。";
     }
     if (bowType === "shelfless_traditional") {
-      return "璁板綍婊℃媺瀹炴祴鎷夐噸銆佸嚭绠偣璺濅腑蹇冪嚎鍜岀闀匡紱鎸夋墍閫夊巶鍟嗕紶缁熷紦 chart 鍙栫浉閭讳袱妗ｈ瘯绠紝鍐嶇敤瑁告潌楠岃瘉銆?;
+      return "记录满拉实测拉重、出箭点距中心线和箭长；按所选厂商传统弓 chart 取相邻两档试箭，再用裸杆验证。";
     }
-    return "鐢ㄦ墍閫夌鏉嗗巶鍟嗙殑 chart锛氬疄娴嬫媺閲嶃€佸叾瀹氫箟鐨勭闀裤€佹€荤澶寸郴缁熼噸閲忥紱鍐嶄互瑁告潌鎴栫焊璋冮獙璇併€?;
+    return "用所选箭杆厂商的 chart：实测拉重、其定义的箭长、总箭头系统重量；再以裸杆或纸调验证。";
   }
 
   function calculateArrowBuild(input) {
     var bowType = normalizeBowType(input.bowType);
-    var drawWeightLb = positiveNumber(input.drawWeightLb, "瀹炴祴鎷夐噸");
-    var shaftLengthIn = positiveNumber(input.shaftLengthIn, "绠潌闀垮害");
-    var shaftGpi = positiveNumber(input.shaftGpi, "绠潌 GPI");
-    var pointSystemWeightGr = nonNegativeNumber(input.pointSystemWeightGr, "绠ご绯荤粺閲嶉噺");
-    var rearComponentsWeightGr = nonNegativeNumber(input.rearComponentsWeightGr, "灏鹃儴缁勪欢閲嶉噺");
+    var drawWeightLb = positiveNumber(input.drawWeightLb, "实测拉重");
+    var shaftLengthIn = positiveNumber(input.shaftLengthIn, "箭杆长度");
+    var shaftGpi = positiveNumber(input.shaftGpi, "箭杆 GPI");
+    var pointSystemWeightGr = nonNegativeNumber(input.pointSystemWeightGr, "箭头系统重量");
+    var rearComponentsWeightGr = nonNegativeNumber(input.rearComponentsWeightGr, "尾部组件重量");
     var finishedArrowWeightGr = shaftLengthIn * shaftGpi + pointSystemWeightGr + rearComponentsWeightGr;
-    var staticDeflectionIn = input.staticDeflectionIn === "" || input.staticDeflectionIn == null ? null : positiveNumber(input.staticDeflectionIn, "闈欐€佹尃搴?);
-    var manufacturerMinGpp = input.manufacturerMinGpp === "" || input.manufacturerMinGpp == null ? null : positiveNumber(input.manufacturerMinGpp, "鍘傚鏈€浣?GPP");
+    var staticDeflectionIn = input.staticDeflectionIn === "" || input.staticDeflectionIn == null ? null : positiveNumber(input.staticDeflectionIn, "静态挠度");
+    var manufacturerMinGpp = input.manufacturerMinGpp === "" || input.manufacturerMinGpp == null ? null : positiveNumber(input.manufacturerMinGpp, "厂家最低 GPP");
     var chartEffectiveDrawWeightLb = drawWeightLb;
     if (bowType === "compound" && pointSystemWeightGr > 100) {
       chartEffectiveDrawWeightLb += (pointSystemWeightGr - 100) / 25 * 3;
@@ -268,9 +268,9 @@
     bowType = normalizeBowType(bowType);
     var drawWeightLb = Number(input.drawWeightLb);
     var drawLengthAmoIn = Number(input.drawLengthAmoIn);
-    positiveNumber(drawWeightLb, "鎷夐噸");
-    positiveNumber(drawLengthAmoIn, "AMO 鎷夎窛");
-    var arrowPassOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null ? null : nonNegativeNumber(input.arrowPassOffsetMm, "鍑虹鐐硅窛涓績绾?);
+    positiveNumber(drawWeightLb, "拉重");
+    positiveNumber(drawLengthAmoIn, "AMO 拉距");
+    var arrowPassOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null ? null : nonNegativeNumber(input.arrowPassOffsetMm, "出箭点距中心线");
     var tuning = baselineTuning[bowType];
 
     return {
@@ -280,12 +280,12 @@
       testShaftLengthIn: Number((drawLengthAmoIn + 1).toFixed(2)),
       arrowPassOffsetMm: arrowPassOffsetMm,
       chartInputs: bowType === "compound"
-        ? "瀹炴祴宄板€兼媺閲嶃€佸疄娴嬬闀裤€佺澶?insert 鎬婚噸銆佸嚫杞?寮﹁窛銆佹拻鏀炬柟寮忋€佸叿浣撶鏉嗗瀷鍙?
-        : "瀹炴祴鎷夐噸銆佸疄娴嬬闀裤€佺澶?insert 鎬婚噸銆佸叿浣撶鏉嗗瀷鍙?,
+        ? "实测峰值拉重、实测箭长、箭头+insert 总重、凸轮/弦距、撒放方式、具体箭杆型号"
+        : "实测拉重、实测箭长、箭头+insert 总重、具体箭杆型号",
       rest: tuning.rest,
       nockingPoint: tuning.nockingPoint,
       centerShot: tuning.centerShot,
-      validation: "婊℃媺娴嬮噺绠暱锛涚敱鍘傚晢 chart 閫夋。锛涚敤瑁告潌鎴栫焊璋冮獙璇佸悗鍐嶈绠?璐拱鏁村銆?
+      validation: "满拉测量箭长；由厂商 chart 选档；用裸杆或纸调验证后再裁箭/购买整套。"
     };
   }
 
@@ -316,4 +316,3 @@
     toCsv: toCsv
   };
 })();
-
