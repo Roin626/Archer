@@ -31,6 +31,8 @@
       equipmentDrawLengths: document.getElementById("equipmentDrawLengths"),
       equipmentMaterial: document.getElementById("equipmentMaterial"),
       equipmentArrowPassOffset: document.getElementById("equipmentArrowPassOffset"),
+      equipmentPointSystemWeight: document.getElementById("equipmentPointSystemWeight"),
+      equipmentShaftModel: document.getElementById("equipmentShaftModel"),
       equipmentReferenceAtaSpine: document.getElementById("equipmentReferenceAtaSpine"),
       equipmentReferenceShaftLength: document.getElementById("equipmentReferenceShaftLength"),
       equipmentReferenceDrawWeight: document.getElementById("equipmentReferenceDrawWeight"),
@@ -222,7 +224,7 @@
   function renderEquipmentMatrix() {
     try {
       var arrowPassOffsetMm = Number(elements.equipmentArrowPassOffset.value || 0);
-      setTableHeaders(elements.equipmentTable, ["弓型", "拉重", "AMO 拉距", "测试箭杆", "ATA 静态 Spine 筛选范围", "厂商 chart 输入项", "Nocking", "箭台 / 中心射出"]);
+      setTableHeaders(elements.equipmentTable, ["弓型", "拉重", "AMO 拉距", "测试箭杆", "ATA 静态 Spine 筛选范围", "厂商 Chart 复核数据", "Nocking", "箭台 / 中心射出"]);
       var rows = window.ArcherModel.buildEquipmentMatrix({
         bowType: elements.equipmentBowType.value,
         drawWeights: elements.equipmentDrawWeights.value,
@@ -243,7 +245,7 @@
           row.drawLengthAmoIn,
           row.testShaftLengthIn + " in",
           formatSpineScreening(row.spineScreening),
-          row.chartInputs,
+          formatChartInputs(row),
           row.nockingPoint,
           "offset " + arrowPassOffsetMm + " mm; " + row.rest + "; " + row.centerShot
         ]);
@@ -288,6 +290,21 @@
       return "填写基准箭后生成";
     }
     return screening.lowerAtaSpine + "-" + screening.upperAtaSpine + "（中心 " + screening.centerAtaSpine + "，±" + screening.bandPercent + "%）";
+  }
+
+  function formatChartInputs(row) {
+    var pointSystemWeight = elements.equipmentPointSystemWeight.value.trim();
+    var shaftModel = elements.equipmentShaftModel.value.trim();
+    var values = [
+      "实测满拉 " + row.drawWeightLb + " lb",
+      "测试箭杆 " + row.testShaftLengthIn + " in",
+      "箭头系统 " + (pointSystemWeight ? pointSystemWeight + " gr" : "未填"),
+      "型号 " + (shaftModel || "未填")
+    ];
+    if (row.bowType === "compound") {
+      values.push("另填凸轮/弦距与撒放方式");
+    }
+    return values.join("；");
   }
 
   function addTableRow(body, values) {
