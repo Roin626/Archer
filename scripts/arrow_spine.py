@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.8 seconds
-Output:
 #!/usr/bin/env python3
 """Arrow measurements with traceable physics and manufacturer-chart handoff.
 
