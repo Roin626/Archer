@@ -255,11 +255,38 @@
       gpp: Number((finishedArrowWeightGr / drawWeightLb).toFixed(2)),
       manufacturerMinGpp: manufacturerMinGpp,
       minimumWeightPasses: manufacturerMinGpp == null ? null : finishedArrowWeightGr / drawWeightLb >= manufacturerMinGpp,
+      minimumPointSystemWeightGr: manufacturerMinGpp == null ? null : Number(Math.max(0, manufacturerMinGpp * drawWeightLb - shaftLengthIn * shaftGpi - rearComponentsWeightGr).toFixed(1)),
       staticDeflectionIn: staticDeflectionIn == null ? null : Number(staticDeflectionIn.toFixed(3)),
       ataSpine: staticDeflectionIn == null ? null : Math.round(staticDeflectionIn * 1000),
       flexuralRigidityLbIn2: staticDeflectionIn == null ? null : Number((1.94 * Math.pow(28, 3) / (48 * staticDeflectionIn)).toFixed(2)),
       chartEffectiveDrawWeightLb: Number(chartEffectiveDrawWeightLb.toFixed(2)),
       chartNextStep: chartNextStep(bowType)
+    };
+  }
+
+  function calculateStaticSpineScreening(input) {
+    var referenceDeflectionIn = positiveNumber(input.referenceDeflectionIn, "基准箭静态挠度");
+    var referenceShaftLengthIn = positiveNumber(input.referenceShaftLengthIn, "基准箭杆长");
+    var referenceDrawWeightLb = positiveNumber(input.referenceDrawWeightLb, "基准箭实测拉重");
+    var targetShaftLengthIn = positiveNumber(input.targetShaftLengthIn, "测试箭杆长");
+    var targetDrawWeightLb = positiveNumber(input.targetDrawWeightLb, "目标实测拉重");
+    var bandPercent = positiveNumber(input.bandPercent, "筛选范围");
+    if (bandPercent >= 100) {
+      throw new Error("筛选范围必须小于 100%");
+    }
+
+    // First-order beam scaling: EI demand tracks draw force and L^3.
+    var centerDeflectionIn = referenceDeflectionIn * referenceDrawWeightLb / targetDrawWeightLb * Math.pow(targetShaftLengthIn / referenceShaftLengthIn, 3);
+    var lowerDeflectionIn = centerDeflectionIn * (1 - bandPercent / 100);
+    var upperDeflectionIn = centerDeflectionIn * (1 + bandPercent / 100);
+    return {
+      centerDeflectionIn: Number(centerDeflectionIn.toFixed(3)),
+      lowerDeflectionIn: Number(lowerDeflectionIn.toFixed(3)),
+      upperDeflectionIn: Number(upperDeflectionIn.toFixed(3)),
+      centerAtaSpine: Math.round(centerDeflectionIn * 1000),
+      lowerAtaSpine: Math.round(lowerDeflectionIn * 1000),
+      upperAtaSpine: Math.round(upperDeflectionIn * 1000),
+      bandPercent: Number(bandPercent.toFixed(1))
     };
   }
 
@@ -285,6 +312,7 @@
       rest: tuning.rest,
       nockingPoint: tuning.nockingPoint,
       centerShot: tuning.centerShot,
+      spineScreening: input.spineScreening || null,
       validation: "满拉测量箭长；由厂商 chart 选档；用裸杆或纸调验证后再裁箭/购买整套。"
     };
   }
@@ -293,13 +321,28 @@
     var drawWeights = parseNumberList(input.drawWeights);
     var drawLengths = parseNumberList(input.drawLengths);
     var rows = [];
+    var hasReferenceArrow = [
+      input.referenceDeflectionIn,
+      input.referenceShaftLengthIn,
+      input.referenceDrawWeightLb
+    ].every(function (value) { return String(value == null ? "" : value).trim() !== ""; });
     drawWeights.forEach(function (drawWeight) {
       drawLengths.forEach(function (drawLength) {
+        var testShaftLengthIn = drawLength + 1;
+        var spineScreening = hasReferenceArrow ? calculateStaticSpineScreening({
+          referenceDeflectionIn: input.referenceDeflectionIn,
+          referenceShaftLengthIn: input.referenceShaftLengthIn,
+          referenceDrawWeightLb: input.referenceDrawWeightLb,
+          targetShaftLengthIn: testShaftLengthIn,
+          targetDrawWeightLb: drawWeight,
+          bandPercent: input.screeningBandPercent || 12.5
+        }) : null;
         rows.push(recommendEquipment({
           bowType: input.bowType,
           drawWeightLb: drawWeight,
           drawLengthAmoIn: drawLength,
-          arrowPassOffsetMm: input.arrowPassOffsetMm
+          arrowPassOffsetMm: input.arrowPassOffsetMm,
+          spineScreening: spineScreening
         }));
       });
     });
@@ -310,6 +353,7 @@
     createSession: createSession,
     createShot: createShot,
     buildEquipmentMatrix: buildEquipmentMatrix,
+    calculateStaticSpineScreening: calculateStaticSpineScreening,
     scoreShot: scoreShot,
     calculateArrowBuild: calculateArrowBuild,
     summarizeShots: summarizeShots,
