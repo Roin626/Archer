@@ -74,6 +74,7 @@ class ArrowBuildResult:
     gpp: float
     manufacturer_min_gpp: float | None
     minimum_weight_passes: bool | None
+    minimum_point_system_weight_gr: float | None
     static_deflection_in: float | None
     ata_spine: int | None
     flexural_rigidity_lb_in2: float | None
@@ -94,7 +95,7 @@ def ata_spine_from_deflection(deflection_in: float) -> int:
 
     if deflection_in <= 0:
         raise ValueError("static deflection must be greater than zero")
-    return round(deflection_in * 1000)
+    return int(deflection_in * 1000 + 0.5)
 
 
 def flexural_rigidity_lb_in2(deflection_in: float) -> float:
@@ -130,6 +131,66 @@ def grains_per_pound(finished_arrow_weight_gr: float, draw_weight_lb: float) -> 
     if finished_arrow_weight_gr <= 0 or draw_weight_lb <= 0:
         raise ValueError("finished arrow weight and draw weight must be greater than zero")
     return finished_arrow_weight_gr / draw_weight_lb
+
+
+def minimum_point_system_weight_for_gpp(
+    draw_weight_lb: float,
+    shaft_length_in: float,
+    shaft_gpi: float,
+    rear_components_weight_gr: float,
+    manufacturer_min_gpp: float,
+) -> float:
+    """Return the point-system mass needed to meet a bow maker's GPP minimum.
+
+    This is a finished-arrow safety mass calculation, not a dynamic-tuning
+    point-weight prediction.
+    """
+
+    if manufacturer_min_gpp <= 0:
+        raise ValueError("manufacturer minimum GPP must be greater than zero")
+    shaft_and_rear_weight = finished_arrow_weight(
+        shaft_length_in,
+        shaft_gpi,
+        0.0,
+        rear_components_weight_gr,
+    )
+    return max(0.0, manufacturer_min_gpp * draw_weight_lb - shaft_and_rear_weight)
+
+
+def static_spine_screening_band(
+    reference_deflection_in: float,
+    reference_shaft_length_in: float,
+    reference_draw_weight_lb: float,
+    target_shaft_length_in: float,
+    target_draw_weight_lb: float,
+    band_percent: float = 12.5,
+) -> tuple[int, int, int]:
+    """Return a calibrated ATA-spine screening band using first-order beam scaling.
+
+    The calculation assumes the reference arrow was tuned under materially
+    comparable point-system, release, rest and bow conditions. It narrows a
+    manufacturer chart search; it is not a universal dynamic-spine equation.
+    """
+
+    values = [
+        reference_deflection_in,
+        reference_shaft_length_in,
+        reference_draw_weight_lb,
+        target_shaft_length_in,
+        target_draw_weight_lb,
+        band_percent,
+    ]
+    if any(value <= 0 for value in values) or band_percent >= 100:
+        raise ValueError("screening inputs must be positive and the band must be below 100%")
+    center_deflection = (
+        reference_deflection_in
+        * reference_draw_weight_lb
+        / target_draw_weight_lb
+        * (target_shaft_length_in / reference_shaft_length_in) ** 3
+    )
+    lower = ata_spine_from_deflection(center_deflection * (1 - band_percent / 100))
+    upper = ata_spine_from_deflection(center_deflection * (1 + band_percent / 100))
+    return lower, ata_spine_from_deflection(center_deflection), upper
 
 
 def compound_chart_effective_weight(draw_weight_lb: float, point_system_weight_gr: float) -> float:
@@ -186,6 +247,16 @@ def calculate_arrow_build(build: ArrowBuild) -> ArrowBuildResult:
         gpp=round(gpp, 2),
         manufacturer_min_gpp=minimum,
         minimum_weight_passes=None if minimum is None else gpp >= minimum,
+        minimum_point_system_weight_gr=None if minimum is None else round(
+            minimum_point_system_weight_for_gpp(
+                build.draw_weight_lb,
+                build.shaft_length_in,
+                build.shaft_gpi,
+                build.rear_components_weight_gr,
+                minimum,
+            ),
+            1,
+        ),
         static_deflection_in=None if static_deflection is None else round(static_deflection, 3),
         ata_spine=None if static_deflection is None else ata_spine_from_deflection(static_deflection),
         flexural_rigidity_lb_in2=None if static_deflection is None else round(flexural_rigidity_lb_in2(static_deflection), 2),
