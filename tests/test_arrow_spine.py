@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.8 seconds
-Output:
 import unittest
 
 from scripts.arrow_spine import (
