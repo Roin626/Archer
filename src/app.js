@@ -224,7 +224,7 @@
   function renderEquipmentMatrix() {
     try {
       var arrowPassOffsetMm = Number(elements.equipmentArrowPassOffset.value || 0);
-      setTableHeaders(elements.equipmentTable, ["弓型", "拉重", "AMO 拉距", "测试箭杆", "ATA 静态 Spine 筛选范围", "厂商 Chart 复核数据", "Nocking", "箭台 / 中心射出"]);
+      setTableHeaders(elements.equipmentTable, ["弓型", "拉重", "AMO 拉距", "测试箭杆", "ATA 静态 Spine 筛选范围", "选箭复核数据", "Nocking", "箭台 / 中心射出"]);
       var rows = window.ArcherModel.buildEquipmentMatrix({
         bowType: elements.equipmentBowType.value,
         drawWeights: elements.equipmentDrawWeights.value,
@@ -271,7 +271,7 @@
       elements.spineError.textContent = "";
       elements.spineSummary.innerHTML = "";
       addDefinitionRow(elements.spineSummary, "弓型", displayBowType(result.bowType));
-      addDefinitionRow(elements.spineSummary, "箭杆厂商 / 型号", elements.spineShaftModel.value.trim() || "未填写");
+      addDefinitionRow(elements.spineSummary, "箭杆来源 / 型号", elements.spineShaftModel.value.trim() || "未填写，不影响计算");
       addDefinitionRow(elements.spineSummary, "成品箭重", result.finishedArrowWeightGr + " gr");
       addDefinitionRow(elements.spineSummary, "GPP", result.gpp);
       addDefinitionRow(elements.spineSummary, "弓厂最低 GPP", result.manufacturerMinGpp == null ? "未填写" : result.manufacturerMinGpp + " GPP：" + (result.minimumWeightPasses ? "通过" : "不通过"));
@@ -299,7 +299,7 @@
       "实测满拉 " + row.drawWeightLb + " lb",
       "测试箭杆 " + row.testShaftLengthIn + " in",
       "箭头系统 " + (pointSystemWeight ? pointSystemWeight + " gr" : "未填"),
-      "型号 " + (shaftModel || "未填")
+      "来源/型号 " + (shaftModel || "未填，不影响计算")
     ];
     if (row.bowType === "compound") {
       values.push("另填凸轮/弦距与撒放方式");
