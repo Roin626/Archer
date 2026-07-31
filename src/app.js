@@ -178,18 +178,18 @@
     var summary = window.ArcherModel.summarizeShots(session.shots);
     var kindLines = Object.keys(summary.byKind).map(function (kind) {
       var group = summary.byKind[kind];
-      return kind + ": " + group.count + " 鏀? 涓績 (" + group.centerX + ", " + group.centerY + ")";
+      return kind + ": " + group.count + " 支, 中心 (" + group.centerX + ", " + group.centerY + ")";
     });
 
     elements.summary.innerHTML = "";
     addSummaryRow("Session", session.id);
-    addSummaryRow("璺濈", session.distanceValue + session.distanceUnit);
-    addSummaryRow("绠暟", summary.count);
-    addSummaryRow("鍧囧垎", summary.averageScore || "-");
-    addSummaryRow("涓績", "(" + summary.centerX + ", " + summary.centerY + ")");
-    addSummaryRow("骞冲潎鍗婂緞", summary.averageRadius);
-    addSummaryRow("鏈€澶у崐寰?, summary.maxRadius);
-    addSummaryRow("鍒嗙被涓績", kindLines.length ? kindLines.join("锛?) : "-");
+    addSummaryRow("距离", session.distanceValue + session.distanceUnit);
+    addSummaryRow("箭数", summary.count);
+    addSummaryRow("均分", summary.averageScore || "-");
+    addSummaryRow("中心", "(" + summary.centerX + ", " + summary.centerY + ")");
+    addSummaryRow("平均半径", summary.averageRadius);
+    addSummaryRow("最大半径", summary.maxRadius);
+    addSummaryRow("分类中心", kindLines.length ? kindLines.join("；") : "-");
   }
 
   function addSummaryRow(label, value) {
@@ -302,16 +302,16 @@
 
   function displayBowType(value) {
     var labels = {
-      american_hunting: "缇庣寧",
-      barebow: "鍏夊紦",
-      chinese_traditional: "鏃犲彴浼犵粺寮?,
-      compound: "澶嶅悎",
-      mongolian_traditional: "鏃犲彴浼犵粺寮?,
-      olympic_recurve: "濂ュ弽",
-      recurve: "鍙嶆洸",
-      shelfless_traditional: "鏃犲彴浼犵粺寮?,
-      traditional: "缇庣寧",
-      turkish_traditional: "鏃犲彴浼犵粺寮?
+      american_hunting: "美猎",
+      barebow: "光弓",
+      chinese_traditional: "无台传统弓",
+      compound: "复合",
+      mongolian_traditional: "无台传统弓",
+      olympic_recurve: "奥反",
+      recurve: "反曲",
+      shelfless_traditional: "无台传统弓",
+      traditional: "美猎",
+      turkish_traditional: "无台传统弓"
     };
     return labels[value] || value;
   }
@@ -328,4 +328,3 @@
     URL.revokeObjectURL(url);
   }
 })();
-
