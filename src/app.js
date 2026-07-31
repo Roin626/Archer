@@ -217,7 +217,7 @@
   function renderEquipmentMatrix() {
     try {
       var arrowPassOffsetMm = Number(elements.equipmentArrowPassOffset.value || 0);
-      setTableHeaders(elements.equipmentTable, ["Bow", "Draw weight", "AMO draw", "Test shaft", "Manufacturer chart inputs", "Nocking", "Rest / center-shot"]);
+      setTableHeaders(elements.equipmentTable, ["弓型", "拉重", "AMO 拉距", "测试箭杆", "厂商 chart 输入项", "Nocking", "箭台 / 中心射出"]);
       var rows = window.ArcherModel.buildEquipmentMatrix({
         bowType: elements.equipmentBowType.value,
         drawWeights: elements.equipmentDrawWeights.value,
@@ -258,14 +258,14 @@
 
       elements.spineError.textContent = "";
       elements.spineSummary.innerHTML = "";
-      addDefinitionRow(elements.spineSummary, "Bow type", displayBowType(result.bowType));
-      addDefinitionRow(elements.spineSummary, "Finished arrow", result.finishedArrowWeightGr + " gr");
+      addDefinitionRow(elements.spineSummary, "弓型", displayBowType(result.bowType));
+      addDefinitionRow(elements.spineSummary, "成品箭重", result.finishedArrowWeightGr + " gr");
       addDefinitionRow(elements.spineSummary, "GPP", result.gpp);
-      addDefinitionRow(elements.spineSummary, "Bow maker minimum", result.manufacturerMinGpp == null ? "not entered" : result.manufacturerMinGpp + " GPP: " + (result.minimumWeightPasses ? "pass" : "fail"));
-      addDefinitionRow(elements.spineSummary, "ATA static spine", result.ataSpine == null ? "not entered" : result.ataSpine + " (" + result.staticDeflectionIn + " in deflection)");
+      addDefinitionRow(elements.spineSummary, "弓厂最低 GPP", result.manufacturerMinGpp == null ? "未填写" : result.manufacturerMinGpp + " GPP：" + (result.minimumWeightPasses ? "通过" : "不通过"));
+      addDefinitionRow(elements.spineSummary, "ATA 静态 Spine", result.ataSpine == null ? "未填写" : result.ataSpine + "（挠度 " + result.staticDeflectionIn + " in）");
       addDefinitionRow(elements.spineSummary, "EI", result.flexuralRigidityLbIn2 == null ? "not entered" : result.flexuralRigidityLbIn2 + " lb in2");
-      addDefinitionRow(elements.spineSummary, "Chart effective draw weight", result.chartEffectiveDrawWeightLb + " lb");
-      addDefinitionRow(elements.spineSummary, "Next step", result.chartNextStep);
+      addDefinitionRow(elements.spineSummary, "Chart 等效拉重", result.chartEffectiveDrawWeightLb + " lb");
+      addDefinitionRow(elements.spineSummary, "下一步", result.chartNextStep);
     } catch (error) {
       elements.spineError.textContent = error.message;
     }
