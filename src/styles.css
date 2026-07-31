@@ -181,6 +181,13 @@ textarea {
   font-size: 13px;
 }
 
+.form-hint {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .tool-table {
   max-height: 360px;
 }
@@ -367,4 +374,3 @@ th {
     grid-template-columns: 92px 1fr;
   }
 }
-
