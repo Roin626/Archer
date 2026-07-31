@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.9 seconds
-Output:
 #!/usr/bin/env python3
 """Produce measurement and tuning checklists for initial arrow setup.
 
