@@ -43,4 +43,3 @@ also defines an arrow as shaft, point, nock, fletching and optional cresting.
 Check the current rulebook for the applicable division and event.
 
 Reference: https://extranet.worldarchery.sport/documents/index.php/Rules/Rule_Book_versions/2022-09-01/EN-Book3.pdf
-
