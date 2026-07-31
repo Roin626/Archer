@@ -158,7 +158,24 @@
               出箭点距中心线 mm
               <input id="equipmentArrowPassOffset" type="number" min="0" step="1" value="25">
             </label>
+            <label>
+              基准箭静态挠度 in
+              <input id="equipmentReferenceDeflection" type="number" min="0.01" max="5" step="0.001" placeholder="例如：0.500">
+            </label>
+            <label>
+              基准箭杆长 in
+              <input id="equipmentReferenceShaftLength" type="number" min="10" max="40" step="0.25" placeholder="例如：30">
+            </label>
+            <label>
+              基准箭实测满拉拉重 lb
+              <input id="equipmentReferenceDrawWeight" type="number" min="5" max="100" step="0.5" placeholder="例如：36">
+            </label>
+            <label>
+              静态 Spine 筛选带 ±%
+              <input id="equipmentScreeningBand" type="number" min="1" max="50" step="0.5" value="12.5">
+            </label>
           </form>
+          <p class="form-hint">基准箭应已在相近箭头系统重量、箭台和撒放条件下调通。筛选带只用于缩小厂商 chart 的候选范围，不是最终动态 spine 结论。</p>
           <div class="toolbar">
             <button id="equipmentButton" type="button">生成配置</button>
           </div>
@@ -171,6 +188,7 @@
                   <th>拉重</th>
                   <th>拉距</th>
                   <th>箭长</th>
+                  <th>ATA 静态 Spine 筛选范围</th>
                   <th>箭头</th>
                   <th>碳箭 spine</th>
                   <th>成品箭重</th>
@@ -240,6 +258,7 @@
               <input id="spineManufacturerMinGpp" type="number" min="0.1" max="50" step="0.1" placeholder="手动填写">
             </label>
           </form>
+          <p class="form-hint">已知挠度和箭杆长时，填入箭杆 GPI、尾部组件与弓厂最低 GPP，可算出满足安全下限所需的箭头系统重量；这不等同于动态调谐的最佳箭头重量。</p>
           <div class="toolbar">
             <button id="spineButton" type="button">计算 spine</button>
           </div>
@@ -249,8 +268,8 @@
       </section>
     </main>
 
-    <script src="src/model.822870f.js"></script>
+    <script src="src/model.7ec8c11.js"></script>
     <script src="src/storage.js"></script>
-    <script src="src/app.822870f.js"></script>
+    <script src="src/app.7ec8c11.js"></script>
   </body>
 </html>
