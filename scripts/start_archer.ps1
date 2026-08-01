@@ -134,7 +134,7 @@ function Run-EquipmentMatrix {
   Invoke-Python $PythonCommand $arguments
 }
 
-function Run-SpineRecommend {
+function Run-SpineCalculator {
   param(
     [Parameter(Mandatory = $true)]
     [string]$Root,
@@ -165,27 +165,15 @@ function Run-SpineRecommend {
     "olympic_recurve" `
     $bowChoices `
     $bowAliases
-  $drawWeight = Read-WithDefault "Actual draw weight or range" "40"
-  $shaftLength = Read-WithDefault "Shaft length (nock throat to shaft end, inches)" "29"
-  $shaftGpi = Read-WithDefault "Shaft GPI" "8"
-  $pointSystemWeight = Read-WithDefault "Point system weight (point + insert/outsert/collar, grains)" "100"
-  $rearComponentsWeight = Read-WithDefault "Rear components weight (nock + fletching + wraps + adhesive, grains)" "25"
-  $staticDeflection = Read-WithDefault "ATA static deflection in inches (optional)" "0.500"
-  $manufacturerMinGpp = Read-WithDefault "Bow maker minimum finished-arrow GPP (optional)" ""
-
-  $arguments = @(
-    (Join-Path $Root "scripts\arrow_spine.py"),
-    "--bow-type", $bowType,
-    "--draw-weight", $drawWeight,
-    "--shaft-length", $shaftLength,
-    "--shaft-gpi", $shaftGpi,
-    "--point-system-weight", $pointSystemWeight,
-    "--rear-components-weight", $rearComponentsWeight,
-    "--static-deflection", $staticDeflection
-  )
-
-  if (-not [string]::IsNullOrWhiteSpace($manufacturerMinGpp)) {
-    $arguments += @("--manufacturer-min-gpp", $manufacturerMinGpp)
+  $mode = Read-ChoiceWithDefault "Calculator (from-weight, from-spine)" "from-weight" @("from-weight", "from-spine")
+  $drawWeight = Read-WithDefault "Actual full-draw weight (lb)" "30"
+  $shaftLength = Read-WithDefault "Shaft length (nock throat to shaft end, inches)" "30"
+  $offset = Read-WithDefault "Arrow-pass offset from centerline (mm)" "0"
+  $arguments = @((Join-Path $Root "scripts\spine_estimator.py"), $mode, "--bow-type", $bowType, "--draw-weight", $drawWeight, "--shaft-length", $shaftLength, "--arrow-pass-offset-mm", $offset)
+  if ($mode -eq "from-weight") {
+    $arguments += @("--finished-arrow-weight", (Read-WithDefault "Finished arrow weight (grains)" "270"))
+  } else {
+    $arguments += @("--ata-spine", (Read-WithDefault "ATA static spine (for example 700)" "700"))
   }
   Invoke-Python $PythonCommand $arguments
 }
@@ -219,7 +207,7 @@ function Show-Menu {
   Write-Host "Archer launcher"
   Write-Host "1. Open landing recorder"
   Write-Host "2. Generate equipment config matrix"
-  Write-Host "3. Generate arrow spine recommendation"
+  Write-Host "3. Calculate spine or finished-arrow weight"
   Write-Host "4. Run tests"
   Write-Host "5. Show docs"
   Write-Host "0. Exit"
@@ -268,7 +256,7 @@ while ($true) {
     }
     "3" {
       if (-not $python) { Write-Host "Python is required."; break }
-      Run-SpineRecommend $root $python
+      Run-SpineCalculator $root $python
     }
     "4" {
       if (-not $python) { Write-Host "Python is required."; break }
