@@ -31,24 +31,33 @@ Point-system mass means point, insert/outsert, collar and forward weights.
 Rear-component mass means nock, fletching, wraps and adhesive. The minimum
 GPP is never guessed: enter the value published in the bow maker's manual.
 
-## What this project does not claim to calculate
+## Two independent calculators
 
-There is no physics or industry standard that converts only bow type, draw
-weight, arrow length and point weight into one universal "recommended carbon
-spine". Dynamic behavior also depends on the shaft model and construction,
-mass distribution, bow power stroke, string, cam/brace-height, release,
-center-shot and tune. Static carbon deflection and traditional wood-arrow
-spine pounds are not interchangeable physical units.
+The application has two separate generic initial-test calculators. They are
+inverses of each other, so neither asks the user to mix an arrow mass with a
+static-spine value in the same calculation.
 
-Accordingly, the application does not emit a universal dynamic-spine or shaft
-number. It prepares the measured inputs needed by the selected shaft maker's
-chart, then requires bare-shaft or paper-tune validation before final cutting
-or purchasing a full set.
+1. **Finished-arrow mass -> static spine.** Enter actual full-draw weight,
+   shaft length (nock throat to shaft end), complete arrow mass and arrow-pass
+   offset. The output is an ATA static-spine center and a test range.
+2. **Static spine -> finished-arrow mass.** Enter the same bow inputs plus an
+   ATA static spine, and the output is the dynamic-equivalent complete arrow
+   mass and GPP. It is not a point-weight prediction and it is not a minimum
+   GPP safety rule.
 
-For compound charts only, the displayed "chart effective draw weight" applies
-Easton's published adjustment of +3 lb per 25 gr above 100 gr point-system
-weight. It is labelled as an Easton chart rule, not a general dynamic-spine
-formula.
+The generic model is explicitly a starting range, not a manufacturer chart.
+For each bow type it uses a 30 lb / 30 in carbon-arrow baseline. It adjusts
+effective draw weight by +3 lb per 25 gr above that bow type's reference
+finished-arrow mass, and by -0.25 lb per millimeter that the arrow pass is
+farther from the baseline centerline offset. Static deflection then scales as
+`L^3 / effective_draw_weight^0.6`. These coefficients make the two
+calculators reversible; they are not universal bow physics.
+
+Use the resulting center plus adjacent spine shafts for bare-shaft or paper
+tuning before cutting shafts or purchasing a full set. Shaft construction,
+mass distribution, string, cam/brace height, release and tune remain outside
+this generic model. Static carbon deflection and traditional wood-arrow spine
+pounds are not interchangeable units.
 
 ## Arrow length convention
 
@@ -66,8 +75,8 @@ final cut instruction. Measure a long shaft at full draw before cutting.
 
 - ASTM F2031, Standard Test Method for Measurement of Arrow Shaft Static Spine
   (Stiffness): https://store.astm.org/f2031-00.html
-- Easton Target Product Guide, arrow-length measurement and shaft chart inputs:
-  https://eastonarchery.com/wp-content/uploads/2020/11/Easton_2021_Target_Product_Guide-Spreads-1.pdf
+- Easton Target Arrow Shaft Selection Guide, chart inputs and point-weight
+  adjustment convention: https://eastonarchery.com/wp-content/uploads/2023/08/301055-A-Arrow-Shaft-Selection-Target.pdf
 - Gold Tip Spine Selector, chart-length and total point-system definitions:
   https://goldtip.com/pages/spine-selector
 - K. et al., Dynamic Characterization of Arrows through Stochastic Perturbation:
