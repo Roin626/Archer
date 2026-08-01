@@ -49,6 +49,20 @@ BOW_TYPE_ALIASES = {
     "turkish_traditional": "shelfless_traditional",
 }
 
+GENERIC_SPINE_BASELINES = {
+    "olympic_recurve": (0.700, 15.0, 9.0, 0.0),
+    "barebow": (0.700, 15.0, 9.0, 0.0),
+    "compound": (0.600, 12.5, 7.0, 0.0),
+    "american_hunting": (0.750, 17.5, 9.5, 12.0),
+    "shelfless_traditional": (0.800, 20.0, 10.0, 25.0),
+}
+GENERIC_BASE_DRAW_WEIGHT_LB = 30.0
+GENERIC_BASE_SHAFT_LENGTH_IN = 30.0
+GENERIC_DRAW_WEIGHT_EXPONENT = 0.6
+ARROW_WEIGHT_STEP_GR = 25.0
+EFFECTIVE_DRAW_PER_ARROW_WEIGHT_STEP_LB = 3.0
+EFFECTIVE_DRAW_PER_OFFSET_MM_LB = 0.25
+
 
 @dataclass(frozen=True)
 class ArrowBuild:
@@ -78,6 +92,12 @@ class ArrowBuildResult:
     static_deflection_in: float | None
     ata_spine: int | None
     flexural_rigidity_lb_in2: float | None
+    estimated_deflection_in: float
+    estimated_ata_spine: int
+    estimated_lower_ata_spine: int
+    estimated_upper_ata_spine: int
+    estimated_effective_draw_weight_lb: float
+    estimated_point_weight_adjustment_lb: float
     chart_effective_draw_weight_lb: float
     chart_next_step: str
 
@@ -113,6 +133,81 @@ def static_deflection_from_flexural_rigidity(flexural_rigidity: float) -> float:
     if flexural_rigidity <= 0:
         raise ValueError("flexural rigidity must be greater than zero")
     return ATA_TEST_LOAD_LB * ATA_SUPPORT_SPAN_IN**3 / (48 * flexural_rigidity)
+
+
+def estimate_static_spine(
+    bow_type: str,
+    draw_weight_lb: float,
+    shaft_length_in: float,
+    finished_arrow_weight_gr: float | None = None,
+    arrow_pass_offset_mm: float | None = None,
+) -> tuple[float, int, int, int, float, float, float]:
+    """Return a generic ATA static-spine starting range.
+
+    The baseline is a practical carbon-shaft start point at 30 lb, 30 in and
+    a bow-type-specific reference finished-arrow GPP and centerline offset.
+    A 25 gr change in finished-arrow mass contributes a 3 lb dynamic-equivalent
+    adjustment. This is an initial test range, not a universal dynamic-spine law.
+    """
+
+    normalized_bow_type = normalize_bow_type(bow_type)
+    if draw_weight_lb <= 0 or shaft_length_in <= 0:
+        raise ValueError("draw weight and shaft length must be positive")
+    baseline_deflection, band_percent, reference_gpp, reference_offset = GENERIC_SPINE_BASELINES[normalized_bow_type]
+    reference_finished_weight = reference_gpp * draw_weight_lb
+    finished_weight = reference_finished_weight if finished_arrow_weight_gr is None else finished_arrow_weight_gr
+    offset = reference_offset if arrow_pass_offset_mm is None else arrow_pass_offset_mm
+    if finished_weight <= 0 or offset < 0:
+        raise ValueError("finished-arrow weight must be positive and arrow-pass offset cannot be negative")
+    arrow_weight_adjustment = (finished_weight - reference_finished_weight) / ARROW_WEIGHT_STEP_GR * EFFECTIVE_DRAW_PER_ARROW_WEIGHT_STEP_LB
+    offset_adjustment = (reference_offset - offset) * EFFECTIVE_DRAW_PER_OFFSET_MM_LB
+    effective_weight = max(5.0, draw_weight_lb + arrow_weight_adjustment + offset_adjustment)
+    center_deflection = (
+        baseline_deflection
+        * (GENERIC_BASE_DRAW_WEIGHT_LB / effective_weight) ** GENERIC_DRAW_WEIGHT_EXPONENT
+        * (shaft_length_in / GENERIC_BASE_SHAFT_LENGTH_IN) ** 3
+    )
+    lower_spine = ata_spine_from_deflection(center_deflection * (1 - band_percent / 100))
+    upper_spine = ata_spine_from_deflection(center_deflection * (1 + band_percent / 100))
+    return (
+        round(center_deflection, 3),
+        ata_spine_from_deflection(center_deflection),
+        lower_spine,
+        upper_spine,
+        round(effective_weight, 2),
+        round(arrow_weight_adjustment, 2),
+        round(offset_adjustment, 2),
+    )
+
+
+def estimate_finished_arrow_weight(
+    bow_type: str,
+    draw_weight_lb: float,
+    shaft_length_in: float,
+    ata_spine: int,
+    arrow_pass_offset_mm: float | None = None,
+) -> tuple[float, float, float]:
+    """Invert the generic estimate to calculate dynamic-equivalent arrow mass."""
+
+    normalized_bow_type = normalize_bow_type(bow_type)
+    if draw_weight_lb <= 0 or shaft_length_in <= 0 or ata_spine <= 0:
+        raise ValueError("draw weight, shaft length and ATA spine must be positive")
+    baseline_deflection, _, reference_gpp, reference_offset = GENERIC_SPINE_BASELINES[normalized_bow_type]
+    offset = reference_offset if arrow_pass_offset_mm is None else arrow_pass_offset_mm
+    if offset < 0:
+        raise ValueError("arrow-pass offset cannot be negative")
+    deflection = ata_spine / 1000.0
+    required_effective_weight = GENERIC_BASE_DRAW_WEIGHT_LB * (
+        baseline_deflection * (shaft_length_in / GENERIC_BASE_SHAFT_LENGTH_IN) ** 3 / deflection
+    ) ** (1 / GENERIC_DRAW_WEIGHT_EXPONENT)
+    reference_finished_weight = reference_gpp * draw_weight_lb
+    offset_adjustment = (reference_offset - offset) * EFFECTIVE_DRAW_PER_OFFSET_MM_LB
+    finished_weight = reference_finished_weight + (
+        required_effective_weight - draw_weight_lb - offset_adjustment
+    ) / EFFECTIVE_DRAW_PER_ARROW_WEIGHT_STEP_LB * ARROW_WEIGHT_STEP_GR
+    if finished_weight <= 0:
+        raise ValueError("the inputs cannot produce a positive finished-arrow weight")
+    return round(finished_weight, 1), round(finished_weight / draw_weight_lb, 2), round(required_effective_weight, 2)
 
 
 def finished_arrow_weight(
@@ -236,6 +331,20 @@ def calculate_arrow_build(build: ArrowBuild) -> ArrowBuildResult:
         if bow_type == "compound"
         else build.draw_weight_lb
     )
+    (
+        estimated_deflection,
+        estimated_ata_spine,
+        estimated_lower_ata_spine,
+        estimated_upper_ata_spine,
+        estimated_effective_weight,
+        estimated_weight_adjustment,
+        _,
+    ) = estimate_static_spine(
+        bow_type,
+        build.draw_weight_lb,
+        build.shaft_length_in,
+        weight,
+    )
     return ArrowBuildResult(
         bow_type=bow_type,
         draw_weight_lb=round(build.draw_weight_lb, 2),
@@ -260,6 +369,12 @@ def calculate_arrow_build(build: ArrowBuild) -> ArrowBuildResult:
         static_deflection_in=None if static_deflection is None else round(static_deflection, 3),
         ata_spine=None if static_deflection is None else ata_spine_from_deflection(static_deflection),
         flexural_rigidity_lb_in2=None if static_deflection is None else round(flexural_rigidity_lb_in2(static_deflection), 2),
+        estimated_deflection_in=estimated_deflection,
+        estimated_ata_spine=estimated_ata_spine,
+        estimated_lower_ata_spine=estimated_lower_ata_spine,
+        estimated_upper_ata_spine=estimated_upper_ata_spine,
+        estimated_effective_draw_weight_lb=estimated_effective_weight,
+        estimated_point_weight_adjustment_lb=estimated_weight_adjustment,
         chart_effective_draw_weight_lb=round(effective_weight, 2),
         chart_next_step=chart_next_step(bow_type),
     )
@@ -327,9 +442,9 @@ def run(args: argparse.Namespace) -> int:
 
 
 def print_table(rows: Sequence[ArrowBuildResult]) -> None:
-    headers = ["bow", "draw#", "shaft in", "finished gr", "GPP", "ATA spine", "chart weight#"]
+    headers = ["bow", "draw#", "shaft in", "finished gr", "GPP", "estimated spine", "ATA spine", "chart weight#"]
     body = [
-        [row.bow_type, row.draw_weight_lb, row.shaft_length_in, row.finished_arrow_weight_gr, row.gpp, row.ata_spine or "-", row.chart_effective_draw_weight_lb]
+        [row.bow_type, row.draw_weight_lb, row.shaft_length_in, row.finished_arrow_weight_gr, row.gpp, f"{row.estimated_lower_ata_spine}-{row.estimated_upper_ata_spine} ({row.estimated_ata_spine})", row.ata_spine or "-", row.chart_effective_draw_weight_lb]
         for row in rows
     ]
     widths = [max(len(str(header)), *(len(str(row[index])) for row in body)) for index, header in enumerate(headers)]
