@@ -2,14 +2,18 @@
 
 ## Purpose
 
-The matrix is an initial measurement and tuning checklist. It does not select a
-universal shaft spine, point-weight range, final arrow length or minimum GPP,
-because none of those values is a cross-brand standard.
+The matrix is an initial measurement and tuning checklist. It gives a generic
+ATA static-spine test range from bow type, actual draw weight, test shaft
+length, optional finished-arrow mass and centerline offset. It does not choose
+a manufacturer shaft model, final cut length, point-weight range or safety
+minimum GPP.
 
 For every draw-weight and AMO draw-length pair it records:
 
 - a conservative test-shaft length: AMO draw length + 1 in;
-- the chart inputs that must be measured for the selected shaft maker;
+- a generic ATA static-spine test range, or a range scaled from an entered
+  already-tuned reference arrow;
+- the optional measurement details used to compare against a maker's chart;
 - a bow-type-specific starting setup and validation procedure.
 
 The test-shaft length is a planning value, not a cutting specification. Measure
@@ -28,8 +32,8 @@ arrow-rest contact, then apply the selected shaft maker's own chart convention.
 For `shelfless_traditional`, measure the arrow-pass offset as the positive
 distance in millimeters from bow centerline to the arrow pass. A practical
 starting measurement is half the grip width at the arrow-pass location. The
-number is recorded for comparison of adjacent test spines; the project does not
-apply an invented linear conversion from that distance to spine.
+number is also used by the generic initial-test model. Its coefficient is a
+visible, reversible approximation; compare adjacent shafts in real shooting.
 
 ## GPP and competition checks
 
