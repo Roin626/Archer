@@ -167,6 +167,23 @@
     }
   };
 
+  // Generic carbon-shaft starting points at 30 lb, 30 in shaft length and a
+  // 100 gr point system. They provide an initial test-spine only; a measured
+  // reference arrow takes precedence when available.
+  var genericSpineBaselines = {
+    olympic_recurve: { deflectionIn: 0.700, bandPercent: 15, referenceGpp: 9, referenceOffsetMm: 0 },
+    barebow: { deflectionIn: 0.700, bandPercent: 15, referenceGpp: 9, referenceOffsetMm: 0 },
+    compound: { deflectionIn: 0.600, bandPercent: 12.5, referenceGpp: 7, referenceOffsetMm: 0 },
+    american_hunting: { deflectionIn: 0.750, bandPercent: 17.5, referenceGpp: 9.5, referenceOffsetMm: 12 },
+    shelfless_traditional: { deflectionIn: 0.800, bandPercent: 20, referenceGpp: 10, referenceOffsetMm: 25 }
+  };
+  var GENERIC_BASE_DRAW_WEIGHT_LB = 30;
+  var GENERIC_BASE_SHAFT_LENGTH_IN = 30;
+  var GENERIC_DRAW_WEIGHT_EXPONENT = 0.6;
+  var ARROW_WEIGHT_STEP_GR = 25;
+  var EFFECTIVE_DRAW_PER_ARROW_WEIGHT_STEP_LB = 3;
+  var EFFECTIVE_DRAW_PER_OFFSET_MM_LB = 0.25;
+
   function normalizeBowType(bowType) {
     var normalized = String(bowType || "").trim().toLowerCase();
     var bowType = bowTypeAliases[normalized] || normalized;
@@ -230,23 +247,104 @@
     return "如有厂商 chart，可按实测拉重、其定义的箭长和总箭头系统重量交叉核对；没有时从相邻候选开始，用裸杆或纸调验证。";
   }
 
-  function calculateArrowBuild(input) {
+  function estimateStaticSpine(input) {
     var bowType = normalizeBowType(input.bowType);
     var drawWeightLb = positiveNumber(input.drawWeightLb, "实测拉重");
     var shaftLengthIn = positiveNumber(input.shaftLengthIn, "箭杆长度");
+    var baseline = genericSpineBaselines[bowType];
+    var referenceFinishedArrowWeightGr = baseline.referenceGpp * drawWeightLb;
+    var finishedArrowWeightGr = input.finishedArrowWeightGr === "" || input.finishedArrowWeightGr == null
+      ? referenceFinishedArrowWeightGr
+      : positiveNumber(input.finishedArrowWeightGr, "成品箭重");
+    var arrowPassOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null
+      ? baseline.referenceOffsetMm
+      : nonNegativeNumber(input.arrowPassOffsetMm, "出箭点距中心线");
+    var arrowWeightAdjustmentLb = (finishedArrowWeightGr - referenceFinishedArrowWeightGr) / ARROW_WEIGHT_STEP_GR * EFFECTIVE_DRAW_PER_ARROW_WEIGHT_STEP_LB;
+    var offsetAdjustmentLb = (baseline.referenceOffsetMm - arrowPassOffsetMm) * EFFECTIVE_DRAW_PER_OFFSET_MM_LB;
+    var effectiveDrawWeightLb = Math.max(5, drawWeightLb + arrowWeightAdjustmentLb + offsetAdjustmentLb);
+    var centerDeflectionIn = baseline.deflectionIn
+      * Math.pow(GENERIC_BASE_DRAW_WEIGHT_LB / effectiveDrawWeightLb, GENERIC_DRAW_WEIGHT_EXPONENT)
+      * Math.pow(shaftLengthIn / GENERIC_BASE_SHAFT_LENGTH_IN, 3);
+    var lowerDeflectionIn = centerDeflectionIn * (1 - baseline.bandPercent / 100);
+    var upperDeflectionIn = centerDeflectionIn * (1 + baseline.bandPercent / 100);
+    return {
+      source: "generic",
+      centerDeflectionIn: Number(centerDeflectionIn.toFixed(3)),
+      lowerDeflectionIn: Number(lowerDeflectionIn.toFixed(3)),
+      upperDeflectionIn: Number(upperDeflectionIn.toFixed(3)),
+      centerAtaSpine: Math.round(centerDeflectionIn * 1000),
+      lowerAtaSpine: Math.round(lowerDeflectionIn * 1000),
+      upperAtaSpine: Math.round(upperDeflectionIn * 1000),
+      bandPercent: baseline.bandPercent,
+      effectiveDrawWeightLb: Number(effectiveDrawWeightLb.toFixed(2)),
+      referenceFinishedArrowWeightGr: Number(referenceFinishedArrowWeightGr.toFixed(1)),
+      finishedArrowWeightGr: Number(finishedArrowWeightGr.toFixed(1)),
+      arrowPassOffsetMm: Number(arrowPassOffsetMm.toFixed(1)),
+      arrowWeightAdjustmentLb: Number(arrowWeightAdjustmentLb.toFixed(2)),
+      offsetAdjustmentLb: Number(offsetAdjustmentLb.toFixed(2))
+    };
+  }
+
+  function estimateFinishedArrowWeight(input) {
+    var bowType = normalizeBowType(input.bowType);
+    var drawWeightLb = positiveNumber(input.drawWeightLb, "实测拉重");
+    var shaftLengthIn = positiveNumber(input.shaftLengthIn, "箭杆长度");
+    var staticDeflectionIn = input.ataSpine === "" || input.ataSpine == null
+      ? positiveNumber(input.staticDeflectionIn, "静态挠度")
+      : positiveNumber(input.ataSpine, "ATA 静态 Spine") / 1000;
+    var baseline = genericSpineBaselines[bowType];
+    var arrowPassOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null
+      ? baseline.referenceOffsetMm
+      : nonNegativeNumber(input.arrowPassOffsetMm, "出箭点距中心线");
+    var lengthRatio = Math.pow(shaftLengthIn / GENERIC_BASE_SHAFT_LENGTH_IN, 3);
+    var requiredEffectiveDrawWeightLb = GENERIC_BASE_DRAW_WEIGHT_LB
+      * Math.pow(baseline.deflectionIn * lengthRatio / staticDeflectionIn, 1 / GENERIC_DRAW_WEIGHT_EXPONENT);
+    var referenceFinishedArrowWeightGr = baseline.referenceGpp * drawWeightLb;
+    var offsetAdjustmentLb = (baseline.referenceOffsetMm - arrowPassOffsetMm) * EFFECTIVE_DRAW_PER_OFFSET_MM_LB;
+    var finishedArrowWeightGr = referenceFinishedArrowWeightGr
+      + (requiredEffectiveDrawWeightLb - drawWeightLb - offsetAdjustmentLb) / EFFECTIVE_DRAW_PER_ARROW_WEIGHT_STEP_LB * ARROW_WEIGHT_STEP_GR;
+    if (finishedArrowWeightGr <= 0) {
+      throw new Error("该挠度与输入条件无法反算出正的成品箭重；请检查弓型、中心线偏差和静态 Spine");
+    }
+    return {
+      bowType: bowType,
+      staticDeflectionIn: Number(staticDeflectionIn.toFixed(3)),
+      ataSpine: Math.round(staticDeflectionIn * 1000),
+      shaftLengthIn: Number(shaftLengthIn.toFixed(3)),
+      drawWeightLb: Number(drawWeightLb.toFixed(2)),
+      arrowPassOffsetMm: Number(arrowPassOffsetMm.toFixed(1)),
+      finishedArrowWeightGr: Number(finishedArrowWeightGr.toFixed(1)),
+      gpp: Number((finishedArrowWeightGr / drawWeightLb).toFixed(2)),
+      requiredEffectiveDrawWeightLb: Number(requiredEffectiveDrawWeightLb.toFixed(2)),
+      referenceFinishedArrowWeightGr: Number(referenceFinishedArrowWeightGr.toFixed(1)),
+      offsetAdjustmentLb: Number(offsetAdjustmentLb.toFixed(2))
+    };
+  }
+
+  function calculateArrowBuild(input) {
+    var bowType = normalizeBowType(input.bowType);
+    var drawWeightLb = positiveNumber(input.drawWeightLb, "实测拉重");
+    var drawLengthAmoIn = input.drawLengthAmoIn === "" || input.drawLengthAmoIn == null ? null : positiveNumber(input.drawLengthAmoIn, "AMO 拉距");
+    var shaftLengthIn = input.shaftLengthIn === "" || input.shaftLengthIn == null
+      ? positiveNumber(drawLengthAmoIn, "AMO 拉距") + 1
+      : positiveNumber(input.shaftLengthIn, "箭杆长度");
     var shaftGpi = positiveNumber(input.shaftGpi, "箭杆 GPI");
     var pointSystemWeightGr = nonNegativeNumber(input.pointSystemWeightGr, "箭头系统重量");
     var rearComponentsWeightGr = nonNegativeNumber(input.rearComponentsWeightGr, "尾部组件重量");
     var finishedArrowWeightGr = shaftLengthIn * shaftGpi + pointSystemWeightGr + rearComponentsWeightGr;
     var staticDeflectionIn = input.staticDeflectionIn === "" || input.staticDeflectionIn == null ? null : positiveNumber(input.staticDeflectionIn, "静态挠度");
     var manufacturerMinGpp = input.manufacturerMinGpp === "" || input.manufacturerMinGpp == null ? null : positiveNumber(input.manufacturerMinGpp, "厂家最低 GPP");
-    var chartEffectiveDrawWeightLb = drawWeightLb;
-    if (bowType === "compound" && pointSystemWeightGr > 100) {
-      chartEffectiveDrawWeightLb += (pointSystemWeightGr - 100) / 25 * 3;
-    }
+    var estimatedSpine = estimateStaticSpine({
+      bowType: bowType,
+      drawWeightLb: drawWeightLb,
+      shaftLengthIn: shaftLengthIn,
+      finishedArrowWeightGr: finishedArrowWeightGr
+    });
     return {
       bowType: bowType,
       drawWeightLb: Number(drawWeightLb.toFixed(2)),
+      drawLengthAmoIn: drawLengthAmoIn == null ? null : Number(drawLengthAmoIn.toFixed(3)),
+      recommendedTestShaftLengthIn: drawLengthAmoIn == null ? null : Number((drawLengthAmoIn + 1).toFixed(3)),
       shaftLengthIn: Number(shaftLengthIn.toFixed(3)),
       shaftWeightGr: Number((shaftLengthIn * shaftGpi).toFixed(1)),
       pointSystemWeightGr: Number(pointSystemWeightGr.toFixed(1)),
@@ -259,7 +357,8 @@
       staticDeflectionIn: staticDeflectionIn == null ? null : Number(staticDeflectionIn.toFixed(3)),
       ataSpine: staticDeflectionIn == null ? null : Math.round(staticDeflectionIn * 1000),
       flexuralRigidityLbIn2: staticDeflectionIn == null ? null : Number((1.94 * Math.pow(28, 3) / (48 * staticDeflectionIn)).toFixed(2)),
-      chartEffectiveDrawWeightLb: Number(chartEffectiveDrawWeightLb.toFixed(2)),
+      estimatedSpine: estimatedSpine,
+      chartEffectiveDrawWeightLb: estimatedSpine.effectiveDrawWeightLb,
       chartNextStep: chartNextStep(bowType)
     };
   }
@@ -342,7 +441,14 @@
           targetShaftLengthIn: testShaftLengthIn,
           targetDrawWeightLb: drawWeight,
           bandPercent: input.screeningBandPercent || 12.5
-        }) : null;
+        }) : estimateStaticSpine({
+          bowType: input.bowType,
+          drawWeightLb: drawWeight,
+          shaftLengthIn: testShaftLengthIn,
+          finishedArrowWeightGr: input.finishedArrowWeightGr,
+          arrowPassOffsetMm: input.arrowPassOffsetMm
+        });
+        spineScreening.source = hasReferenceArrow ? "calibrated" : "generic";
         rows.push(recommendEquipment({
           bowType: input.bowType,
           drawWeightLb: drawWeight,
@@ -360,6 +466,8 @@
     createShot: createShot,
     buildEquipmentMatrix: buildEquipmentMatrix,
     calculateStaticSpineScreening: calculateStaticSpineScreening,
+    estimateStaticSpine: estimateStaticSpine,
+    estimateFinishedArrowWeight: estimateFinishedArrowWeight,
     scoreShot: scoreShot,
     calculateArrowBuild: calculateArrowBuild,
     summarizeShots: summarizeShots,
