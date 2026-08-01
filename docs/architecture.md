@@ -66,8 +66,10 @@ suggestTuneAdjustments(analysis, bowProfile) -> TuneSuggestion[]
 配置推荐模块的接口边界：
 
 ```python
-recommend_equipment(bow_type, draw_weight_lb, draw_length_amo_in, arrow_material) -> EquipmentRecommendation
-build_matrix(bow_type, draw_weights, draw_lengths, arrow_material) -> EquipmentRecommendation[]
+estimate_static_spine(bow_type, draw_weight_lb, shaft_length_in, finished_arrow_weight_gr, arrow_pass_offset_mm) -> SpineRange
+estimate_finished_arrow_weight(bow_type, draw_weight_lb, shaft_length_in, ata_spine, arrow_pass_offset_mm) -> ArrowMass
+recommend_equipment(bow_type, draw_weight_lb, draw_length_amo_in, arrow_pass_offset_mm) -> EquipmentRecommendation
+build_matrix(bow_type, draw_weights, draw_lengths, arrow_pass_offset_mm) -> EquipmentRecommendation[]
 ```
 
 配置推荐只输出初筛候选，不直接写入 session。后续管理层可以把某一条推荐固化为 `EquipmentProfile`，再和实射 session 绑定。
