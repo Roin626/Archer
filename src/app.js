@@ -31,7 +31,7 @@
       equipmentDrawLengths: document.getElementById("equipmentDrawLengths"),
       equipmentMaterial: document.getElementById("equipmentMaterial"),
       equipmentArrowPassOffset: document.getElementById("equipmentArrowPassOffset"),
-      equipmentPointSystemWeight: document.getElementById("equipmentPointSystemWeight"),
+      equipmentFinishedArrowWeight: document.getElementById("equipmentFinishedArrowWeight"),
       equipmentShaftModel: document.getElementById("equipmentShaftModel"),
       equipmentReferenceAtaSpine: document.getElementById("equipmentReferenceAtaSpine"),
       equipmentReferenceShaftLength: document.getElementById("equipmentReferenceShaftLength"),
@@ -40,19 +40,22 @@
       equipmentButton: document.getElementById("equipmentButton"),
       equipmentError: document.getElementById("equipmentError"),
       equipmentTable: document.getElementById("equipmentTable"),
-      spineBowType: document.getElementById("spineBowType"),
-      spineDrawWeight: document.getElementById("spineDrawWeight"),
-      spineArrowLength: document.getElementById("spineArrowLength"),
-      spinePointWeight: document.getElementById("spinePointWeight"),
-      spineShaftModel: document.getElementById("spineShaftModel"),
-      spineMaterial: document.getElementById("spineMaterial"),
-      spineShaftGpi: document.getElementById("spineShaftGpi"),
-      spineRearComponentsWeight: document.getElementById("spineRearComponentsWeight"),
-      spineStaticDeflection: document.getElementById("spineStaticDeflection"),
-      spineManufacturerMinGpp: document.getElementById("spineManufacturerMinGpp"),
-      spineButton: document.getElementById("spineButton"),
-      spineError: document.getElementById("spineError"),
-      spineSummary: document.getElementById("spineSummary")
+      spineFromWeightBowType: document.getElementById("spineFromWeightBowType"),
+      spineFromWeightDrawWeight: document.getElementById("spineFromWeightDrawWeight"),
+      spineFromWeightArrowLength: document.getElementById("spineFromWeightArrowLength"),
+      spineFromWeightFinishedArrowWeight: document.getElementById("spineFromWeightFinishedArrowWeight"),
+      spineFromWeightArrowPassOffset: document.getElementById("spineFromWeightArrowPassOffset"),
+      spineFromWeightButton: document.getElementById("spineFromWeightButton"),
+      spineFromWeightError: document.getElementById("spineFromWeightError"),
+      spineFromWeightSummary: document.getElementById("spineFromWeightSummary"),
+      weightFromSpineBowType: document.getElementById("weightFromSpineBowType"),
+      weightFromSpineDrawWeight: document.getElementById("weightFromSpineDrawWeight"),
+      weightFromSpineArrowLength: document.getElementById("weightFromSpineArrowLength"),
+      weightFromSpineAtaSpine: document.getElementById("weightFromSpineAtaSpine"),
+      weightFromSpineArrowPassOffset: document.getElementById("weightFromSpineArrowPassOffset"),
+      weightFromSpineButton: document.getElementById("weightFromSpineButton"),
+      weightFromSpineError: document.getElementById("weightFromSpineError"),
+      weightFromSpineSummary: document.getElementById("weightFromSpineSummary")
     };
 
     bindEvents();
@@ -60,7 +63,8 @@
     writeForm(session);
     render();
     renderEquipmentMatrix();
-    renderSpineRecommendation();
+    renderSpineFromWeight();
+    renderWeightFromSpine();
   }
 
   function bindEvents() {
@@ -97,7 +101,8 @@
     });
 
     elements.equipmentButton.addEventListener("click", renderEquipmentMatrix);
-    elements.spineButton.addEventListener("click", renderSpineRecommendation);
+    elements.spineFromWeightButton.addEventListener("click", renderSpineFromWeight);
+    elements.weightFromSpineButton.addEventListener("click", renderWeightFromSpine);
   }
 
   function readForm() {
@@ -233,7 +238,8 @@
         referenceAtaSpine: elements.equipmentReferenceAtaSpine.value,
         referenceShaftLengthIn: elements.equipmentReferenceShaftLength.value,
         referenceDrawWeightLb: elements.equipmentReferenceDrawWeight.value,
-        screeningBandPercent: elements.equipmentScreeningBand.value
+        screeningBandPercent: elements.equipmentScreeningBand.value,
+        finishedArrowWeightGr: elements.equipmentFinishedArrowWeight.value
       });
 
       elements.equipmentError.textContent = "";
@@ -255,33 +261,45 @@
     }
   }
 
-  function renderSpineRecommendation() {
+  function renderSpineFromWeight() {
     try {
-      var result = window.ArcherModel.calculateArrowBuild({
-        bowType: elements.spineBowType.value,
-        drawWeightLb: elements.spineDrawWeight.value,
-        shaftLengthIn: elements.spineArrowLength.value,
-        shaftGpi: elements.spineShaftGpi.value,
-        pointSystemWeightGr: elements.spinePointWeight.value,
-        rearComponentsWeightGr: elements.spineRearComponentsWeight.value,
-        staticDeflectionIn: elements.spineStaticDeflection.value,
-        manufacturerMinGpp: elements.spineManufacturerMinGpp.value
+      var result = window.ArcherModel.estimateStaticSpine({
+        bowType: elements.spineFromWeightBowType.value,
+        drawWeightLb: elements.spineFromWeightDrawWeight.value,
+        shaftLengthIn: elements.spineFromWeightArrowLength.value,
+        finishedArrowWeightGr: elements.spineFromWeightFinishedArrowWeight.value,
+        arrowPassOffsetMm: elements.spineFromWeightArrowPassOffset.value
       });
 
-      elements.spineError.textContent = "";
-      elements.spineSummary.innerHTML = "";
-      addDefinitionRow(elements.spineSummary, "弓型", displayBowType(result.bowType));
-      addDefinitionRow(elements.spineSummary, "箭杆来源 / 型号", elements.spineShaftModel.value.trim() || "未填写，不影响计算");
-      addDefinitionRow(elements.spineSummary, "成品箭重", result.finishedArrowWeightGr + " gr");
-      addDefinitionRow(elements.spineSummary, "GPP", result.gpp);
-      addDefinitionRow(elements.spineSummary, "弓厂最低 GPP", result.manufacturerMinGpp == null ? "未填写" : result.manufacturerMinGpp + " GPP：" + (result.minimumWeightPasses ? "通过" : "不通过"));
-      addDefinitionRow(elements.spineSummary, "满足最低 GPP 所需箭头系统重", result.minimumPointSystemWeightGr == null ? "填写弓厂最低 GPP 后计算" : result.minimumPointSystemWeightGr + " gr（安全下限）");
-      addDefinitionRow(elements.spineSummary, "ATA 静态 Spine", result.ataSpine == null ? "未填写" : result.ataSpine + "（挠度 " + result.staticDeflectionIn + " in）");
-      addDefinitionRow(elements.spineSummary, "EI", result.flexuralRigidityLbIn2 == null ? "not entered" : result.flexuralRigidityLbIn2 + " lb in2");
-      addDefinitionRow(elements.spineSummary, "Chart 等效拉重", result.chartEffectiveDrawWeightLb + " lb");
-      addDefinitionRow(elements.spineSummary, "下一步", result.chartNextStep);
+      elements.spineFromWeightError.textContent = "";
+      elements.spineFromWeightSummary.innerHTML = "";
+      addDefinitionRow(elements.spineFromWeightSummary, "推荐 ATA 静态 Spine", formatSpineScreening(result));
+      addDefinitionRow(elements.spineFromWeightSummary, "推荐静态挠度", result.centerDeflectionIn + " in");
+      addDefinitionRow(elements.spineFromWeightSummary, "成品箭重 / GPP", result.finishedArrowWeightGr + " gr / " + (result.finishedArrowWeightGr / Number(elements.spineFromWeightDrawWeight.value)).toFixed(2));
+      addDefinitionRow(elements.spineFromWeightSummary, "等效拉重", result.effectiveDrawWeightLb + " lb（箭重 " + signedNumber(result.arrowWeightAdjustmentLb) + " lb，偏差 " + signedNumber(result.offsetAdjustmentLb) + " lb）");
     } catch (error) {
-      elements.spineError.textContent = error.message;
+      elements.spineFromWeightError.textContent = error.message;
+    }
+  }
+
+  function renderWeightFromSpine() {
+    try {
+      var result = window.ArcherModel.estimateFinishedArrowWeight({
+        bowType: elements.weightFromSpineBowType.value,
+        drawWeightLb: elements.weightFromSpineDrawWeight.value,
+        shaftLengthIn: elements.weightFromSpineArrowLength.value,
+        ataSpine: elements.weightFromSpineAtaSpine.value,
+        arrowPassOffsetMm: elements.weightFromSpineArrowPassOffset.value
+      });
+
+      elements.weightFromSpineError.textContent = "";
+      elements.weightFromSpineSummary.innerHTML = "";
+      addDefinitionRow(elements.weightFromSpineSummary, "动态等效成品箭重", result.finishedArrowWeightGr + " gr");
+      addDefinitionRow(elements.weightFromSpineSummary, "对应 GPP", result.gpp);
+      addDefinitionRow(elements.weightFromSpineSummary, "输入 ATA 静态 Spine", result.ataSpine + "（挠度 " + result.staticDeflectionIn + " in）");
+      addDefinitionRow(elements.weightFromSpineSummary, "反算等效拉重", result.requiredEffectiveDrawWeightLb + " lb（偏差修正 " + signedNumber(result.offsetAdjustmentLb) + " lb）");
+    } catch (error) {
+      elements.weightFromSpineError.textContent = error.message;
     }
   }
 
@@ -289,16 +307,21 @@
     if (!screening) {
       return "填写基准箭后生成";
     }
-    return screening.lowerAtaSpine + "-" + screening.upperAtaSpine + "（中心 " + screening.centerAtaSpine + "，±" + screening.bandPercent + "%）";
+    var source = screening.source === "calibrated" ? "基准校准" : "默认初筛";
+    return screening.lowerAtaSpine + "-" + screening.upperAtaSpine + "（中心 " + screening.centerAtaSpine + "，±" + screening.bandPercent + "%；" + source + "）";
+  }
+
+  function signedNumber(value) {
+    return (value > 0 ? "+" : "") + value;
   }
 
   function formatChartInputs(row) {
-    var pointSystemWeight = elements.equipmentPointSystemWeight.value.trim();
+    var finishedArrowWeight = elements.equipmentFinishedArrowWeight.value.trim();
     var shaftModel = elements.equipmentShaftModel.value.trim();
     var values = [
       "实测满拉 " + row.drawWeightLb + " lb",
       "测试箭杆 " + row.testShaftLengthIn + " in",
-      "箭头系统 " + (pointSystemWeight ? pointSystemWeight + " gr" : "未填"),
+      "成品箭重 " + (finishedArrowWeight ? finishedArrowWeight + " gr" : "按默认 GPP 初筛"),
       "来源/型号 " + (shaftModel || "未填，不影响计算")
     ];
     if (row.bowType === "compound") {
