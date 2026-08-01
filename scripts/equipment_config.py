@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Produce measurement and tuning checklists for initial arrow setup.
-
-The matrix intentionally does not emit a universal spine or GPP target. Those
-values are not standards and change with the chosen shaft and bow maker.
-"""
+"""Produce measurement and generic static-spine starting ranges for initial setup."""
 
 from __future__ import annotations
 
@@ -15,9 +11,9 @@ from dataclasses import asdict, dataclass
 from typing import Iterable, Sequence
 
 try:
-    from .arrow_spine import BOW_TYPES, BOW_TYPE_ALIASES, normalize_bow_type, parse_number_list
+    from .arrow_spine import BOW_TYPES, BOW_TYPE_ALIASES, estimate_static_spine, normalize_bow_type, parse_number_list
 except ImportError:
-    from arrow_spine import BOW_TYPES, BOW_TYPE_ALIASES, normalize_bow_type, parse_number_list
+    from arrow_spine import BOW_TYPES, BOW_TYPE_ALIASES, estimate_static_spine, normalize_bow_type, parse_number_list
 
 
 TEST_ARROW_CLEARANCE_IN = 1.0
@@ -58,6 +54,7 @@ class EquipmentRecommendation:
     draw_length_amo_in: float
     test_shaft_length_in: float
     arrow_pass_offset_mm: float | None
+    static_spine_range: str
     chart_inputs: str
     rest: str
     nocking_point: str
@@ -91,6 +88,7 @@ def recommend_equipment(
     draw_weight_lb: float,
     draw_length_amo_in: float,
     arrow_pass_offset_mm: float | None = None,
+    finished_arrow_weight_gr: float | None = None,
     clearance_in: float = TEST_ARROW_CLEARANCE_IN,
 ) -> EquipmentRecommendation:
     bow_type = normalize_bow_type(bow_type)
@@ -99,12 +97,15 @@ def recommend_equipment(
     if arrow_pass_offset_mm is not None and arrow_pass_offset_mm < 0:
         raise ValueError("arrow-pass offset is a non-negative distance in millimeters")
     tuning = BASELINE_TUNING[bow_type]
+    shaft_length = test_shaft_length(draw_length_amo_in, clearance_in)
+    spine = estimate_static_spine(bow_type, draw_weight_lb, shaft_length, finished_arrow_weight_gr, arrow_pass_offset_mm)
     return EquipmentRecommendation(
         bow_type=bow_type,
         draw_weight_lb=draw_weight_lb,
         draw_length_amo_in=draw_length_amo_in,
-        test_shaft_length_in=test_shaft_length(draw_length_amo_in, clearance_in),
+        test_shaft_length_in=shaft_length,
         arrow_pass_offset_mm=arrow_pass_offset_mm,
+        static_spine_range=f"{spine[2]}-{spine[3]} (center {spine[1]})",
         chart_inputs=chart_inputs(bow_type),
         rest=tuning["rest"],
         nocking_point=tuning["nocking_point"],
@@ -118,10 +119,11 @@ def build_matrix(
     draw_weights: Sequence[float],
     draw_lengths: Sequence[float],
     arrow_pass_offset_mm: float | None = None,
+    finished_arrow_weight_gr: float | None = None,
     clearance_in: float = TEST_ARROW_CLEARANCE_IN,
 ) -> list[EquipmentRecommendation]:
     return [
-        recommend_equipment(bow_type, weight, length, arrow_pass_offset_mm, clearance_in)
+        recommend_equipment(bow_type, weight, length, arrow_pass_offset_mm, finished_arrow_weight_gr, clearance_in)
         for weight in draw_weights
         for length in draw_lengths
     ]
@@ -133,13 +135,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--draw-weights", type=parse_number_list, required=True)
     parser.add_argument("--draw-lengths", type=parse_number_list, required=True)
     parser.add_argument("--arrow-pass-offset-mm", type=float, help="Non-negative distance from bow centerline to arrow pass, in mm.")
+    parser.add_argument("--finished-arrow-weight", type=float, help="Optional completed-arrow mass in grains; omitted uses bow-type reference GPP.")
     parser.add_argument("--clearance", type=float, default=TEST_ARROW_CLEARANCE_IN, help="Extra length for a test shaft only, inches.")
     parser.add_argument("--format", choices=["table", "json", "csv"], default="table")
     return parser
 
 
 def run(args: argparse.Namespace) -> int:
-    rows = build_matrix(args.bow_type, args.draw_weights, args.draw_lengths, args.arrow_pass_offset_mm, args.clearance)
+    rows = build_matrix(args.bow_type, args.draw_weights, args.draw_lengths, args.arrow_pass_offset_mm, args.finished_arrow_weight, args.clearance)
     if args.format == "json":
         print(json.dumps([asdict(row) for row in rows], ensure_ascii=False, indent=2))
     elif args.format == "csv":
@@ -152,8 +155,8 @@ def run(args: argparse.Namespace) -> int:
 
 
 def print_table(rows: Sequence[EquipmentRecommendation]) -> None:
-    headers = ["bow", "draw#", "AMO draw", "test shaft", "offset mm", "nocking"]
-    body = [[row.bow_type, row.draw_weight_lb, row.draw_length_amo_in, row.test_shaft_length_in, row.arrow_pass_offset_mm or "-", row.nocking_point] for row in rows]
+    headers = ["bow", "draw#", "AMO draw", "test shaft", "ATA spine", "offset mm", "nocking"]
+    body = [[row.bow_type, row.draw_weight_lb, row.draw_length_amo_in, row.test_shaft_length_in, row.static_spine_range, row.arrow_pass_offset_mm if row.arrow_pass_offset_mm is not None else "-", row.nocking_point] for row in rows]
     widths = [max(len(str(header)), *(len(str(row[index])) for row in body)) for index, header in enumerate(headers)]
     print("  ".join(str(header).ljust(widths[index]) for index, header in enumerate(headers)))
     print("  ".join("-" * width for width in widths))
