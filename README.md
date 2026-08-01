@@ -31,7 +31,7 @@ start_archer.bat
 - 标记箭型：羽箭、裸杆、测试箭。
 - 自动计算环值和组散布。
 - 在网页内生成不同拉重、AMO 拉距下的配件配置矩阵。
-- 在网页内计算单组箭长/箭头重量下的 spine 推荐。
+- 在网页内用“成品箭重 -> 静态 Spine”与“静态 Spine -> 成品箭重”两个独立计算器做初筛。
 - 导出 JSON/CSV。
 - 本地保存最近 session。
 
@@ -43,17 +43,19 @@ start_archer.bat
 
 ## 箭矢挠度脚本
 
-生成推荐表：
+已知成品箭重，计算 ATA 静态 Spine 初筛范围：
 
 ```powershell
-python scripts/arrow_spine.py --bow-type olympic_recurve --draw-weight 36 --shaft-length 29 --shaft-gpi 8.1 --point-system-weight 120 --rear-components-weight 28 --static-deflection 0.500 --manufacturer-min-gpp 6
+python scripts/spine_estimator.py from-weight --bow-type olympic_recurve --draw-weight 30 --shaft-length 30 --finished-arrow-weight 270 --arrow-pass-offset-mm 0
 ```
 
-评估单支箭：
+已知 ATA 静态 Spine，反算动态等效成品箭重：
 
 ```powershell
-The calculator verifies finished arrow weight, GPP and ATA static deflection. It then hands the measured inputs to the selected shaft maker's chart; it does not invent a universal dynamic-spine recommendation.
+python scripts/spine_estimator.py from-spine --bow-type olympic_recurve --draw-weight 30 --shaft-length 30 --ata-spine 700 --arrow-pass-offset-mm 0
 ```
+
+`scripts/arrow_spine.py` 仍用于按箭杆 GPI、箭头系统和尾部组件核算成品箭重、GPP、ATA 静态挠度及厂家最低 GPP。两类工具的职责不混合。
 
 ## 模块化配件配置矩阵
 
