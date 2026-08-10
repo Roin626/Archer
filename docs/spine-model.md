@@ -31,27 +31,35 @@ Point-system mass means point, insert/outsert, collar and forward weights.
 Rear-component mass means nock, fletching, wraps and adhesive. The minimum
 GPP is never guessed: enter the value published in the bow maker's manual.
 
-## Two independent calculators
+## Two-stage selection and tuning calculator
 
-The application has two separate generic initial-test calculators. They are
-inverses of each other, so neither asks the user to mix an arrow mass with a
-static-spine value in the same calculation.
+The calculator follows the practical order used for initial arrow selection:
 
-1. **Finished-arrow mass -> static spine.** Enter actual full-draw weight,
-   shaft length (nock throat to shaft end), complete arrow mass and arrow-pass
-   offset. The output is an ATA static-spine center and a test range.
-2. **Static spine -> finished-arrow mass.** Enter the same bow inputs plus an
-   ATA static spine, and the output is the dynamic-equivalent complete arrow
-   mass and GPP. It is not a point-weight prediction and it is not a minimum
-   GPP safety rule.
+1. **Select a bare-shaft spine range.** Enter actual full-draw weight, the
+   measured draw distance and shaft length. The draw distance is measured from
+   nock throat to the bow's pivot point; shaft length is measured from nock
+   throat to shaft end. They are different values. The resulting shaft-length
+   clearance is displayed and the calculator gives an ATA static-spine test
+   range. Point weight and finished-arrow mass are deliberately excluded here.
+2. **Tune point-system mass from shooting feedback.** Enter the bare-arrow
+   mass (shaft plus rear components, excluding the point system), current
+   point-system mass and the actual ATA spine. After a stable bare-shaft or
+   paper-tune observation, select high/center/low and stiff/neutral/weak. The
+   calculator proposes a next point-system mass in 25 gr increments and, when
+   needed, the adjacent static-spine direction to test.
+
+The feedback grid is intentionally directional: high -> add 25 gr, low ->
+remove 25 gr, stiff -> lower ATA number (stiffer shaft), weak -> raise ATA
+number (weaker shaft). When both axes need correction, it expands the adjacent
+shaft test from 50 to 100 ATA points. These are trial instructions, not a claim
+that impact alone uniquely diagnoses arrow tune; verify nocking point,
+clearance, form and aiming first.
 
 The generic model is explicitly a starting range, not a manufacturer chart.
 For each bow type it uses a 30 lb / 30 in carbon-arrow baseline. It adjusts
-effective draw weight by +3 lb per 25 gr above that bow type's reference
-finished-arrow mass, and by -0.25 lb per millimeter that the arrow pass is
-farther from the baseline centerline offset. Static deflection then scales as
-`L^3 / effective_draw_weight^0.6`. These coefficients make the two
-calculators reversible; they are not universal bow physics.
+the initial selection only for arrow-pass centerline offset, then scales static
+deflection as `L^3 / effective_draw_weight^0.6`. Point-system mass is treated
+as a later tuning variable, not an initial-spine input.
 
 Use the resulting center plus adjacent spine shafts for bare-shaft or paper
 tuning before cutting shafts or purchasing a full set. Shaft construction,
