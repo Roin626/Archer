@@ -14,6 +14,46 @@ const initial = ArcherModel.estimateBareShaftSpine({
 assert.equal(initial.centerAtaSpine, 632);
 assert.equal(initial.shaftClearanceIn, 1);
 
+const clearance = ArcherModel.calculateHandleClearanceRanges({
+  bowType: "shelfless_traditional",
+  drawWeightLb: 30,
+  drawLengthIn: 28,
+  shaftLengthIn: 29,
+  gripWidthMm: 50
+});
+
+assert.equal(clearance.arrowPassOffsetMm, 25);
+assert.equal(clearance.offsetSource, "grip-width-half");
+assert.equal(clearance.lateralForceLb, 1.055);
+assert.deepEqual(
+  [clearance.materials.carbon.dynamicDeflectionMinMm, clearance.materials.carbon.dynamicDeflectionMaxMm],
+  [28, 30]
+);
+assert.deepEqual(
+  [clearance.materials.carbon.ataSpineMin, clearance.materials.carbon.ataSpineMax],
+  [913, 1222]
+);
+assert.deepEqual(
+  [clearance.materials.bamboo_wood.dynamicDeflectionMinMm, clearance.materials.bamboo_wood.dynamicDeflectionMaxMm],
+  [29, 32]
+);
+assert.deepEqual(
+  [clearance.materials.bamboo_wood.woodSpinePoundsMin, clearance.materials.bamboo_wood.woodSpinePoundsMax],
+  [16.2, 23.4]
+);
+
+const centerShot = ArcherModel.calculateHandleClearanceRanges({
+  bowType: "olympic_recurve",
+  drawWeightLb: 30,
+  drawLengthIn: 28,
+  shaftLengthIn: 29,
+  arrowPassOffsetMm: 0
+});
+
+assert.equal(centerShot.noHandleClearanceRequired, true);
+assert.equal(centerShot.materials.carbon.dynamicDeflectionMinMm, 0);
+assert.equal(centerShot.materials.carbon.ataSpineMin, null);
+
 const adjustment = ArcherModel.recommendPointWeightAdjustment({
   drawWeightLb: 30,
   bareArrowWeightGr: 170,
