@@ -285,6 +285,92 @@
     };
   }
 
+  function estimateBareShaftSpine(input) {
+    var bowType = normalizeBowType(input.bowType);
+    var drawWeightLb = positiveNumber(input.drawWeightLb, "实测满拉拉重");
+    var drawLengthIn = positiveNumber(input.drawLengthIn, "实测拉距");
+    var shaftLengthIn = positiveNumber(input.shaftLengthIn, "箭杆长");
+    var baseline = genericSpineBaselines[bowType];
+    var gripWidthMm = input.gripWidthMm === "" || input.gripWidthMm == null
+      ? null
+      : nonNegativeNumber(input.gripWidthMm, "弓把宽度");
+    var manualOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null
+      ? null
+      : nonNegativeNumber(input.arrowPassOffsetMm, "出箭点距中心线");
+    var arrowPassOffsetMm = gripWidthMm != null && gripWidthMm > 0
+      ? gripWidthMm / 2
+      : manualOffsetMm == null ? baseline.referenceOffsetMm : manualOffsetMm;
+    if (bowType === "shelfless_traditional" && gripWidthMm == null && manualOffsetMm == null) {
+      throw new Error("无台传统弓请测量弓把宽度，或直接填写出箭点距中心线");
+    }
+    var shaftClearanceIn = shaftLengthIn - drawLengthIn;
+    if (shaftClearanceIn < 0) {
+      throw new Error("箭杆长不能短于以箭尾喉口至弓把 pivot 测得的拉距");
+    }
+    var offsetAdjustmentLb = (baseline.referenceOffsetMm - arrowPassOffsetMm) * EFFECTIVE_DRAW_PER_OFFSET_MM_LB;
+    var effectiveDrawWeightLb = Math.max(5, drawWeightLb + offsetAdjustmentLb);
+    var centerDeflectionIn = baseline.deflectionIn
+      * Math.pow(GENERIC_BASE_DRAW_WEIGHT_LB / effectiveDrawWeightLb, GENERIC_DRAW_WEIGHT_EXPONENT)
+      * Math.pow(shaftLengthIn / GENERIC_BASE_SHAFT_LENGTH_IN, 3);
+    var lowerDeflectionIn = centerDeflectionIn * (1 - baseline.bandPercent / 100);
+    var upperDeflectionIn = centerDeflectionIn * (1 + baseline.bandPercent / 100);
+    return {
+      source: "bare-shaft-chart-start",
+      bowType: bowType,
+      drawWeightLb: Number(drawWeightLb.toFixed(2)),
+      drawLengthIn: Number(drawLengthIn.toFixed(3)),
+      shaftLengthIn: Number(shaftLengthIn.toFixed(3)),
+      shaftClearanceIn: Number(shaftClearanceIn.toFixed(3)),
+      arrowPassOffsetMm: Number(arrowPassOffsetMm.toFixed(1)),
+      offsetSource: gripWidthMm != null && gripWidthMm > 0 ? "grip-width-half" : "manual-or-default",
+      centerDeflectionIn: Number(centerDeflectionIn.toFixed(3)),
+      lowerDeflectionIn: Number(lowerDeflectionIn.toFixed(3)),
+      upperDeflectionIn: Number(upperDeflectionIn.toFixed(3)),
+      centerAtaSpine: Math.round(centerDeflectionIn * 1000),
+      lowerAtaSpine: Math.round(lowerDeflectionIn * 1000),
+      upperAtaSpine: Math.round(upperDeflectionIn * 1000),
+      bandPercent: baseline.bandPercent,
+      effectiveDrawWeightLb: Number(effectiveDrawWeightLb.toFixed(2)),
+      offsetAdjustmentLb: Number(offsetAdjustmentLb.toFixed(2))
+    };
+  }
+
+  function recommendPointWeightAdjustment(input) {
+    var drawWeightLb = positiveNumber(input.drawWeightLb, "实测满拉拉重");
+    var bareArrowWeightGr = positiveNumber(input.bareArrowWeightGr, "裸箭重量");
+    var pointWeightGr = nonNegativeNumber(input.pointWeightGr, "箭头系统重量");
+    var ataSpine = positiveNumber(input.ataSpine, "裸箭 ATA 静态 Spine");
+    var verticalFeedback = String(input.verticalFeedback || "center");
+    var lateralFeedback = String(input.lateralFeedback || "neutral");
+    if (["high", "center", "low"].indexOf(verticalFeedback) === -1) {
+      throw new Error("纵向落点反馈必须为高、中或低");
+    }
+    if (["stiff", "neutral", "weak"].indexOf(lateralFeedback) === -1) {
+      throw new Error("横向动态反馈必须为偏硬、中性或偏软");
+    }
+    var pointDeltaGr = verticalFeedback === "high" ? ARROW_WEIGHT_STEP_GR : verticalFeedback === "low" ? -ARROW_WEIGHT_STEP_GR : 0;
+    var spineStep = verticalFeedback !== "center" && lateralFeedback !== "neutral" ? 100 : 50;
+    var ataSpineDelta = lateralFeedback === "stiff" ? -spineStep : lateralFeedback === "weak" ? spineStep : 0;
+    var targetPointWeightGr = pointWeightGr + pointDeltaGr;
+    if (targetPointWeightGr < 0) {
+      throw new Error("当前箭头系统重量不足以再减轻 25 gr；请改用更轻的可用组件或保持当前重量");
+    }
+    var currentFinishedArrowWeightGr = bareArrowWeightGr + pointWeightGr;
+    var targetFinishedArrowWeightGr = bareArrowWeightGr + targetPointWeightGr;
+    return {
+      pointDeltaGr: pointDeltaGr,
+      targetPointWeightGr: Number(targetPointWeightGr.toFixed(1)),
+      currentFinishedArrowWeightGr: Number(currentFinishedArrowWeightGr.toFixed(1)),
+      targetFinishedArrowWeightGr: Number(targetFinishedArrowWeightGr.toFixed(1)),
+      currentGpp: Number((currentFinishedArrowWeightGr / drawWeightLb).toFixed(2)),
+      targetGpp: Number((targetFinishedArrowWeightGr / drawWeightLb).toFixed(2)),
+      ataSpineDelta: ataSpineDelta,
+      targetAtaSpine: Math.round(ataSpine + ataSpineDelta),
+      needsSpineChange: ataSpineDelta !== 0,
+      feedback: { vertical: verticalFeedback, lateral: lateralFeedback }
+    };
+  }
+
   function estimateFinishedArrowWeight(input) {
     var bowType = normalizeBowType(input.bowType);
     var drawWeightLb = positiveNumber(input.drawWeightLb, "实测拉重");
@@ -441,11 +527,11 @@
           targetShaftLengthIn: testShaftLengthIn,
           targetDrawWeightLb: drawWeight,
           bandPercent: input.screeningBandPercent || 12.5
-        }) : estimateStaticSpine({
+        }) : estimateBareShaftSpine({
           bowType: input.bowType,
           drawWeightLb: drawWeight,
+          drawLengthIn: drawLength,
           shaftLengthIn: testShaftLengthIn,
-          finishedArrowWeightGr: input.finishedArrowWeightGr,
           arrowPassOffsetMm: input.arrowPassOffsetMm
         });
         spineScreening.source = hasReferenceArrow ? "calibrated" : "generic";
@@ -466,8 +552,10 @@
     createShot: createShot,
     buildEquipmentMatrix: buildEquipmentMatrix,
     calculateStaticSpineScreening: calculateStaticSpineScreening,
+    estimateBareShaftSpine: estimateBareShaftSpine,
     estimateStaticSpine: estimateStaticSpine,
     estimateFinishedArrowWeight: estimateFinishedArrowWeight,
+    recommendPointWeightAdjustment: recommendPointWeightAdjustment,
     scoreShot: scoreShot,
     calculateArrowBuild: calculateArrowBuild,
     summarizeShots: summarizeShots,
