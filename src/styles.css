@@ -207,6 +207,22 @@ textarea {
   margin-top: 12px;
 }
 
+.two-stage-panel {
+  grid-column: span 2;
+}
+
+.two-stage-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.two-stage-results h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
 .target-panel {
   display: grid;
   gap: 14px;
@@ -331,7 +347,8 @@ th {
 @media (max-width: 920px) {
   .panel-heading,
   .workspace,
-  .tool-grid {
+  .tool-grid,
+  .two-stage-results {
     display: grid;
     grid-template-columns: 1fr;
   }
@@ -350,6 +367,10 @@ th {
 
   .target {
     width: min(100%, 620px);
+  }
+
+  .two-stage-panel {
+    grid-column: span 1;
   }
 }
 
