@@ -31,7 +31,7 @@ start_archer.bat
 - 标记箭型：羽箭、裸杆、测试箭。
 - 自动计算环值和组散布。
 - 在网页内生成不同拉重、AMO 拉距下的配件配置矩阵。
-- 在网页内用“成品箭重 -> 静态 Spine”与“静态 Spine -> 成品箭重”两个独立计算器做初筛。
+- 在网页内先按拉距、拉重和箭杆长初筛裸箭静态 Spine，再按实射落点反馈调整箭头系统重量。
 - 导出 JSON/CSV。
 - 本地保存最近 session。
 
@@ -43,13 +43,13 @@ start_archer.bat
 
 ## 箭矢挠度脚本
 
-已知成品箭重，计算 ATA 静态 Spine 初筛范围：
+按实测拉重、箭杆长和中心线偏差计算 ATA 静态 Spine 初筛范围：
 
 ```powershell
 python scripts/spine_estimator.py from-weight --bow-type olympic_recurve --draw-weight 30 --shaft-length 30 --finished-arrow-weight 270 --arrow-pass-offset-mm 0
 ```
 
-已知 ATA 静态 Spine，反算动态等效成品箭重：
+网页的“两阶段选箭与落点调箭”使用不同的工作流：第一阶段明确区分拉距（箭尾喉口至弓把 pivot）与箭杆长（箭尾喉口至箭杆端部），不让箭头重量参与初筛；第二阶段按高/中/低与偏硬/中性/偏软的落点判断，输出下一次箭头系统重量和相邻 Spine 试箭方向。
 
 ```powershell
 python scripts/spine_estimator.py from-spine --bow-type olympic_recurve --draw-weight 30 --shaft-length 30 --ata-spine 700 --arrow-pass-offset-mm 0
