@@ -33,20 +33,55 @@ GPP is never guessed: enter the value published in the bow maker's manual.
 
 ## Two-stage selection and tuning calculator
 
-The calculator follows the practical order used for initial arrow selection:
+The first stage is a handle-clearance engineering screen, not a manufacturer
+selection chart. Enter actual full-draw weight `F`, measured draw distance `D`,
+shaft length `L`, and the arrow-pass offset from the bow centerline `e`.
+For a shelfless bow, entering grip width makes `e = grip width / 2`.
 
-1. **Select a bare-shaft spine range.** Enter actual full-draw weight, the
-   measured draw distance and shaft length. The draw distance is measured from
-   nock throat to the bow's pivot point; shaft length is measured from nock
-   throat to shaft end. They are different values. The resulting shaft-length
-   clearance is displayed and the calculator gives an ATA static-spine test
-   range. Point weight and finished-arrow mass are deliberately excluded here.
-2. **Tune point-system mass from shooting feedback.** Enter the bare-arrow
-   mass (shaft plus rear components, excluding the point system), current
-   point-system mass and the actual ATA spine. After a stable bare-shaft or
-   paper-tune observation, select high/center/low and stiff/neutral/weak. The
-   calculator proposes a next point-system mass in 25 gr increments and, when
-   needed, the adjacent static-spine direction to test.
+The simplified small-angle lateral load is:
+
+```text
+e_in = e_mm / 25.4
+F_side = F * e_in / D
+R = (F_side / 1.94) * (L / 28)^3
+```
+
+`R` converts ATA static deflection into a lateral response at the entered load
+and shaft length. The required dynamic clearance is first set geometrically:
+
+```text
+C_min = e_mm + assumed shaft diameter / 2
+C_max = C_min + clearance allowance
+```
+
+The static deflection candidate interval that can produce this dynamic range is:
+
+```text
+static_deflection_min = C_min / (25.4 * k_max * R)
+static_deflection_max = C_max / (25.4 * k_min * R)
+ATA spine number = static_deflection_in * 1000
+```
+
+`k` is an explicit project assumption for the difference between static beam
+response and the release transient. Current screening assumptions are:
+
+| Material | Assumed diameter | Clearance allowance | Dynamic factor `k` |
+| --- | ---: | ---: | ---: |
+| Carbon | 6 mm | 2 mm | 1.6-2.0 |
+| Bamboo / wood | 8 mm | 3 mm | 1.3-1.7 |
+
+The required dynamic displacement is therefore controlled by offset and shaft
+radius. Draw weight, draw distance and shaft length control which static-spine
+range can reach that displacement. At zero centerline offset, this model
+returns zero handle-clearance demand and deliberately does not infer a Spine
+range from handle clearance alone.
+
+The second stage tunes point-system mass from shooting feedback. Enter the
+bare-arrow mass (shaft plus rear components, excluding the point system),
+current point-system mass and actual ATA spine. After a stable bare-shaft or
+paper-tune observation, select high/center/low and stiff/neutral/weak. The
+calculator proposes the next point-system mass in 25 gr increments and, when
+needed, the adjacent static-spine direction to test.
 
 The feedback grid is intentionally directional: high -> add 25 gr, low ->
 remove 25 gr, stiff -> lower ATA number (stiffer shaft), weak -> raise ATA
@@ -55,17 +90,13 @@ shaft test from 50 to 100 ATA points. These are trial instructions, not a claim
 that impact alone uniquely diagnoses arrow tune; verify nocking point,
 clearance, form and aiming first.
 
-The generic model is explicitly a starting range, not a manufacturer chart.
-For each bow type it uses a 30 lb / 30 in carbon-arrow baseline. It adjusts
-the initial selection only for arrow-pass centerline offset, then scales static
-deflection as `L^3 / effective_draw_weight^0.6`. Point-system mass is treated
-as a later tuning variable, not an initial-spine input.
-
-Use the resulting center plus adjacent spine shafts for bare-shaft or paper
-tuning before cutting shafts or purchasing a full set. Shaft construction,
-mass distribution, string, cam/brace height, release and tune remain outside
-this generic model. Static carbon deflection and traditional wood-arrow spine
-pounds are not interchangeable units.
+Use the resulting interval only to choose adjacent test shafts for bare-shaft
+or paper tuning before cutting shafts or purchasing a full set. The material
+factors above are provisional engineering bounds, not ATA/ASTM values and not
+validated replacements for measured shaft natural frequency, damping or bow
+release data. Shaft construction, mass distribution, string, brace height,
+release and tune remain outside this simplified model. Static carbon deflection
+and traditional wood-arrow spine pounds are not interchangeable units.
 
 ## Arrow length convention
 
@@ -75,9 +106,8 @@ insert instead; use the exact convention printed on the chosen maker's chart.
 Arrow length must be measured at full draw. AMO draw length is not by itself a
 safe final cut length.
 
-For test planning, the equipment matrix displays AMO draw length + 1 in as a
-conservative test-shaft starting length only. It must not be treated as a
-final cut instruction. Measure a long shaft at full draw before cutting.
+Measure a long shaft at full draw before cutting. The calculator rejects a
+shaft length shorter than the entered pivot-point draw distance.
 
 ## References
 
@@ -87,5 +117,5 @@ final cut instruction. Measure a long shaft at full draw before cutting.
   adjustment convention: https://eastonarchery.com/wp-content/uploads/2023/08/301055-A-Arrow-Shaft-Selection-Target.pdf
 - Gold Tip Spine Selector, chart-length and total point-system definitions:
   https://goldtip.com/pages/spine-selector
-- K. et al., Dynamic Characterization of Arrows through Stochastic Perturbation:
+- Fish et al., Dynamic Characterization of Arrows through Stochastic Perturbation:
   https://arxiv.org/abs/1909.08186
