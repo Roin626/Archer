@@ -4,7 +4,8 @@
 
 The matrix is an initial measurement and tuning checklist. It gives a generic
 ATA static-spine test range from bow type, actual draw weight, test shaft
-length, optional finished-arrow mass and centerline offset. It does not choose
+length and centerline offset. Finished-arrow mass is recorded only for later
+GPP and tuning review; it does not determine the initial bare-shaft spine. It does not choose
 a manufacturer shaft model, final cut length, point-weight range or safety
 minimum GPP.
 
