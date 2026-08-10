@@ -223,6 +223,22 @@ textarea {
   font-size: 15px;
 }
 
+.material-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.material-results > div {
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+}
+
+.material-results h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
 .target-panel {
   display: grid;
   gap: 14px;
@@ -348,7 +364,8 @@ th {
   .panel-heading,
   .workspace,
   .tool-grid,
-  .two-stage-results {
+  .two-stage-results,
+  .material-results {
     display: grid;
     grid-template-columns: 1fr;
   }
