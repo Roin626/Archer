@@ -159,8 +159,8 @@
               <input id="equipmentArrowPassOffset" type="number" min="0" step="1" value="25">
             </label>
             <label>
-              成品箭重 gr（可选）
-              <input id="equipmentFinishedArrowWeight" type="number" min="50" max="1500" step="1" placeholder="不填则按弓型默认 GPP 初筛">
+              成品箭重 gr（仅复核）
+              <input id="equipmentFinishedArrowWeight" type="number" min="50" max="1500" step="1" placeholder="不参与裸箭 Spine 初筛">
             </label>
             <label>
               箭杆来源 / 型号（可选）
@@ -183,7 +183,7 @@
               <input id="equipmentScreeningBand" type="number" min="1" max="50" step="0.5" value="12.5">
             </label>
           </form>
-          <p class="form-hint">未填基准箭时，矩阵按弓型、拉重、测试箭杆长、成品箭重和中心线偏差给出初筛范围。基准箭应已在相近箭重、箭台和撒放条件下调通；填入后会覆盖默认估算。</p>
+          <p class="form-hint">未填基准箭时，矩阵按弓型、拉重、测试箭杆长和中心线偏差给出裸箭 Spine 初筛范围。成品箭重只用于复核记录；基准箭应已在相近箭台和撒放条件下调通，填入后会覆盖默认估算。</p>
           <div class="toolbar">
             <button id="equipmentButton" type="button">生成配置</button>
           </div>
@@ -210,44 +210,36 @@
           </div>
         </section>
 
-        <section class="panel tool-panel">
+        <section class="panel tool-panel two-stage-panel">
           <div class="panel-heading compact-heading">
-            <h2>箭重 → 静态 Spine</h2>
+            <h2>两阶段选箭与落点调箭</h2>
           </div>
-          <form id="spineFromWeightForm" class="setup-grid tool-form">
-            <label>弓型<select id="spineFromWeightBowType"><option value="olympic_recurve">奥反</option><option value="barebow">光弓</option><option value="compound">复合</option><option value="american_hunting">美猎</option><option value="shelfless_traditional">无台传统弓</option></select></label>
-            <label>实测满拉拉重 lb<input id="spineFromWeightDrawWeight" type="number" min="5" step="0.5" value="30"></label>
-            <label>箭杆长 in<input id="spineFromWeightArrowLength" type="number" min="10" step="0.25" value="30"></label>
-            <label>成品箭重 gr<input id="spineFromWeightFinishedArrowWeight" type="number" min="50" max="1500" step="1" value="270"></label>
-            <label>出箭点距中心线 mm<input id="spineFromWeightArrowPassOffset" type="number" min="0" max="80" step="1" value="0"></label>
+          <form id="tuningForm" class="setup-grid tool-form">
+            <label>弓型<select id="tuningBowType"><option value="olympic_recurve">奥反</option><option value="barebow">光弓</option><option value="compound">复合</option><option value="american_hunting">美猎</option><option value="shelfless_traditional">无台传统弓</option></select></label>
+            <label>实测满拉拉重 lb<input id="tuningDrawWeight" type="number" min="5" step="0.5" value="30"></label>
+            <label>实测拉距 in<input id="tuningDrawLength" type="number" min="10" step="0.25" value="28"></label>
+            <label>箭杆长 in<input id="tuningShaftLength" type="number" min="10" step="0.25" value="29"></label>
+            <label>弓把宽度 mm（无台填）<input id="tuningGripWidth" type="number" min="0" step="1" placeholder="自动取一半作中心线偏差"></label>
+            <label>出箭点距中心线 mm<input id="tuningArrowPassOffset" type="number" min="0" step="1" placeholder="无台弓未填弓把宽度时必填"></label>
+            <label>裸箭重量 gr（不含箭头）<input id="tuningBareArrowWeight" type="number" min="1" step="1" value="170"></label>
+            <label>箭头系统重量 gr<input id="tuningPointWeight" type="number" min="0" step="1" value="100"></label>
+            <label>裸箭 ATA 静态 Spine<input id="tuningAtaSpine" type="number" min="100" max="2000" step="1" value="700"></label>
+            <label>纵向落点反馈<select id="tuningVerticalFeedback"><option value="high">高：加重箭头</option><option value="center" selected>中：保持箭头重量</option><option value="low">低：减轻箭头</option></select></label>
+            <label>横向动态反馈<select id="tuningLateralFeedback"><option value="stiff">偏硬：试更硬 Spine</option><option value="neutral" selected>中性：保持 Spine</option><option value="weak">偏软：试更软 Spine</option></select></label>
           </form>
-          <p class="form-hint">输入完成箭重，而非只输入箭头重量。输出为 ATA 静态 Spine 的初筛范围，最终需用裸杆或纸调验证。</p>
-          <div class="toolbar"><button id="spineFromWeightButton" type="button">计算推荐挠度</button></div>
-          <p id="spineFromWeightError" class="form-error" role="alert"></p>
-          <dl id="spineFromWeightSummary" class="summary tool-summary"></dl>
-        </section>
-
-        <section class="panel tool-panel">
-          <div class="panel-heading compact-heading">
-            <h2>静态 Spine → 箭重</h2>
+          <p class="form-hint">拉距是箭尾喉口至弓把 pivot 的实测距离；箭杆长是喉口至箭杆端部。第一阶段不使用箭头重量选 Spine。第二阶段的高/低与偏硬/偏软，须在瞄准、nocking point、箭台/手背接触和撒放稳定后判定。</p>
+          <div class="toolbar"><button id="tuningButton" type="button">计算初筛与下一次调箭</button></div>
+          <p id="tuningError" class="form-error" role="alert"></p>
+          <div class="two-stage-results">
+            <div><h3>第一阶段：裸箭 Spine 初筛</h3><dl id="initialSpineSummary" class="summary tool-summary"></dl></div>
+            <div><h3>第二阶段：落点反馈调箭</h3><dl id="pointTuneSummary" class="summary tool-summary"></dl></div>
           </div>
-          <form id="weightFromSpineForm" class="setup-grid tool-form">
-            <label>弓型<select id="weightFromSpineBowType"><option value="olympic_recurve">奥反</option><option value="barebow">光弓</option><option value="compound">复合</option><option value="american_hunting">美猎</option><option value="shelfless_traditional">无台传统弓</option></select></label>
-            <label>实测满拉拉重 lb<input id="weightFromSpineDrawWeight" type="number" min="5" step="0.5" value="30"></label>
-            <label>箭杆长 in<input id="weightFromSpineArrowLength" type="number" min="10" step="0.25" value="30"></label>
-            <label>ATA 静态 Spine<input id="weightFromSpineAtaSpine" type="number" min="100" max="2000" step="1" value="700"></label>
-            <label>出箭点距中心线 mm<input id="weightFromSpineArrowPassOffset" type="number" min="0" max="80" step="1" value="0"></label>
-          </form>
-          <p class="form-hint">反算的是与该挠度动态等效的成品箭重和 GPP；它不是箭头重量，也不能替代弓厂的最低 GPP 安全要求。</p>
-          <div class="toolbar"><button id="weightFromSpineButton" type="button">计算等效箭重</button></div>
-          <p id="weightFromSpineError" class="form-error" role="alert"></p>
-          <dl id="weightFromSpineSummary" class="summary tool-summary"></dl>
         </section>
       </section>
     </main>
 
-    <script src="src/model.2calc.js"></script>
+    <script src="src/model.twostage.js"></script>
     <script src="src/storage.js"></script>
-    <script src="src/app.2calc.js"></script>
+    <script src="src/app.twostage.js"></script>
   </body>
 </html>
