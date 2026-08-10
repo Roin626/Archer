@@ -123,93 +123,6 @@
       </section>
 
       <section class="tool-grid">
-        <section class="panel tool-panel">
-          <div class="panel-heading compact-heading">
-            <h2>配件配置矩阵</h2>
-          </div>
-          <form id="equipmentForm" class="setup-grid tool-form">
-            <label>
-              弓型
-              <select id="equipmentBowType">
-                <option value="olympic_recurve">奥反</option>
-                <option value="barebow">光弓</option>
-                <option value="compound">复合</option>
-                <option value="american_hunting">美猎</option>
-                <option value="shelfless_traditional">无台传统弓</option>
-              </select>
-            </label>
-            <label>
-              拉重
-              <input id="equipmentDrawWeights" type="text" value="26:40:2">
-            </label>
-            <label>
-              AMO 拉距
-              <input id="equipmentDrawLengths" type="text" value="26,28,30">
-            </label>
-            <label>
-              箭材
-              <select id="equipmentMaterial">
-                <option value="carbon">碳箭</option>
-                <option value="wood">木箭</option>
-                <option value="bamboo">竹箭</option>
-              </select>
-            </label>
-            <label>
-              出箭点距中心线 mm
-              <input id="equipmentArrowPassOffset" type="number" min="0" step="1" value="25">
-            </label>
-            <label>
-              成品箭重 gr（仅复核）
-              <input id="equipmentFinishedArrowWeight" type="number" min="50" max="1500" step="1" placeholder="不参与裸箭 Spine 初筛">
-            </label>
-            <label>
-              箭杆来源 / 型号（可选）
-              <input id="equipmentShaftModel" type="text" placeholder="例如：自制碳箭 / Easton Avance 600">
-            </label>
-            <label>
-              基准箭 ATA 静态 Spine
-              <input id="equipmentReferenceAtaSpine" type="number" min="100" max="1500" step="1" placeholder="例如：600">
-            </label>
-            <label>
-              基准箭杆长 in
-              <input id="equipmentReferenceShaftLength" type="number" min="10" max="40" step="0.25" placeholder="例如：30">
-            </label>
-            <label>
-              基准箭实测满拉拉重 lb
-              <input id="equipmentReferenceDrawWeight" type="number" min="5" max="100" step="0.5" placeholder="例如：36">
-            </label>
-            <label>
-              静态 Spine 筛选带 ±%
-              <input id="equipmentScreeningBand" type="number" min="1" max="50" step="0.5" value="12.5">
-            </label>
-          </form>
-          <p class="form-hint">未填基准箭时，矩阵按弓型、拉重、测试箭杆长和中心线偏差给出裸箭 Spine 初筛范围。成品箭重只用于复核记录；基准箭应已在相近箭台和撒放条件下调通，填入后会覆盖默认估算。</p>
-          <div class="toolbar">
-            <button id="equipmentButton" type="button">生成配置</button>
-          </div>
-          <p id="equipmentError" class="form-error" role="alert"></p>
-          <div class="table-wrap tool-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>弓型</th>
-                  <th>拉重</th>
-                  <th>拉距</th>
-                  <th>箭长</th>
-                  <th>ATA 静态 Spine 筛选范围</th>
-                  <th>选箭复核数据</th>
-                  <th>碳箭 spine</th>
-                  <th>成品箭重</th>
-                  <th>最低箭重</th>
-                  <th>Nocking</th>
-                  <th>箭台/中心射出</th>
-                </tr>
-              </thead>
-              <tbody id="equipmentTable"></tbody>
-            </table>
-          </div>
-        </section>
-
         <section class="panel tool-panel two-stage-panel">
           <div class="panel-heading compact-heading">
             <h2>两阶段选箭与落点调箭</h2>
@@ -227,19 +140,26 @@
             <label>纵向落点反馈<select id="tuningVerticalFeedback"><option value="high">高：加重箭头</option><option value="center" selected>中：保持箭头重量</option><option value="low">低：减轻箭头</option></select></label>
             <label>横向动态反馈<select id="tuningLateralFeedback"><option value="stiff">偏硬：试更硬 Spine</option><option value="neutral" selected>中性：保持 Spine</option><option value="weak">偏软：试更软 Spine</option></select></label>
           </form>
-          <p class="form-hint">拉距是箭尾喉口至弓把 pivot 的实测距离；箭杆长是喉口至箭杆端部。第一阶段不使用箭头重量选 Spine。第二阶段的高/低与偏硬/偏软，须在瞄准、nocking point、箭台/手背接触和撒放稳定后判定。</p>
+          <p class="form-hint">拉距是箭尾喉口至弓把 pivot 的实测距离；箭杆长是喉口至箭杆端部。第一阶段以中心线偏差确定绕把净空，再按拉重、拉距和箭杆长换算静态 Spine 候选；箭头重量只在第二阶段按稳定落点反馈调整。</p>
           <div class="toolbar"><button id="tuningButton" type="button">计算初筛与下一次调箭</button></div>
           <p id="tuningError" class="form-error" role="alert"></p>
           <div class="two-stage-results">
-            <div><h3>第一阶段：裸箭 Spine 初筛</h3><dl id="initialSpineSummary" class="summary tool-summary"></dl></div>
+            <div class="clearance-stage">
+              <h3>第一阶段：绕弓把动态挠度</h3>
+              <dl id="initialSpineSummary" class="summary tool-summary"></dl>
+              <div class="material-results">
+                <div><h4>碳箭杆</h4><dl id="carbonClearanceSummary" class="summary tool-summary"></dl></div>
+                <div><h4>竹 / 木箭杆</h4><dl id="naturalClearanceSummary" class="summary tool-summary"></dl></div>
+              </div>
+            </div>
             <div><h3>第二阶段：落点反馈调箭</h3><dl id="pointTuneSummary" class="summary tool-summary"></dl></div>
           </div>
         </section>
       </section>
     </main>
 
-    <script src="src/model.twostage.js"></script>
+    <script src="src/model.clearance.js"></script>
     <script src="src/storage.js"></script>
-    <script src="src/app.twostage.js"></script>
+    <script src="src/app.clearance.js"></script>
   </body>
 </html>
