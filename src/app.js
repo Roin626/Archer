@@ -40,22 +40,21 @@
       equipmentButton: document.getElementById("equipmentButton"),
       equipmentError: document.getElementById("equipmentError"),
       equipmentTable: document.getElementById("equipmentTable"),
-      spineFromWeightBowType: document.getElementById("spineFromWeightBowType"),
-      spineFromWeightDrawWeight: document.getElementById("spineFromWeightDrawWeight"),
-      spineFromWeightArrowLength: document.getElementById("spineFromWeightArrowLength"),
-      spineFromWeightFinishedArrowWeight: document.getElementById("spineFromWeightFinishedArrowWeight"),
-      spineFromWeightArrowPassOffset: document.getElementById("spineFromWeightArrowPassOffset"),
-      spineFromWeightButton: document.getElementById("spineFromWeightButton"),
-      spineFromWeightError: document.getElementById("spineFromWeightError"),
-      spineFromWeightSummary: document.getElementById("spineFromWeightSummary"),
-      weightFromSpineBowType: document.getElementById("weightFromSpineBowType"),
-      weightFromSpineDrawWeight: document.getElementById("weightFromSpineDrawWeight"),
-      weightFromSpineArrowLength: document.getElementById("weightFromSpineArrowLength"),
-      weightFromSpineAtaSpine: document.getElementById("weightFromSpineAtaSpine"),
-      weightFromSpineArrowPassOffset: document.getElementById("weightFromSpineArrowPassOffset"),
-      weightFromSpineButton: document.getElementById("weightFromSpineButton"),
-      weightFromSpineError: document.getElementById("weightFromSpineError"),
-      weightFromSpineSummary: document.getElementById("weightFromSpineSummary")
+      tuningBowType: document.getElementById("tuningBowType"),
+      tuningDrawWeight: document.getElementById("tuningDrawWeight"),
+      tuningDrawLength: document.getElementById("tuningDrawLength"),
+      tuningShaftLength: document.getElementById("tuningShaftLength"),
+      tuningGripWidth: document.getElementById("tuningGripWidth"),
+      tuningArrowPassOffset: document.getElementById("tuningArrowPassOffset"),
+      tuningBareArrowWeight: document.getElementById("tuningBareArrowWeight"),
+      tuningPointWeight: document.getElementById("tuningPointWeight"),
+      tuningAtaSpine: document.getElementById("tuningAtaSpine"),
+      tuningVerticalFeedback: document.getElementById("tuningVerticalFeedback"),
+      tuningLateralFeedback: document.getElementById("tuningLateralFeedback"),
+      tuningButton: document.getElementById("tuningButton"),
+      tuningError: document.getElementById("tuningError"),
+      initialSpineSummary: document.getElementById("initialSpineSummary"),
+      pointTuneSummary: document.getElementById("pointTuneSummary")
     };
 
     bindEvents();
@@ -63,8 +62,7 @@
     writeForm(session);
     render();
     renderEquipmentMatrix();
-    renderSpineFromWeight();
-    renderWeightFromSpine();
+    renderTwoStageTuning();
   }
 
   function bindEvents() {
@@ -101,8 +99,7 @@
     });
 
     elements.equipmentButton.addEventListener("click", renderEquipmentMatrix);
-    elements.spineFromWeightButton.addEventListener("click", renderSpineFromWeight);
-    elements.weightFromSpineButton.addEventListener("click", renderWeightFromSpine);
+    elements.tuningButton.addEventListener("click", renderTwoStageTuning);
   }
 
   function readForm() {
@@ -261,45 +258,36 @@
     }
   }
 
-  function renderSpineFromWeight() {
+  function renderTwoStageTuning() {
     try {
-      var result = window.ArcherModel.estimateStaticSpine({
-        bowType: elements.spineFromWeightBowType.value,
-        drawWeightLb: elements.spineFromWeightDrawWeight.value,
-        shaftLengthIn: elements.spineFromWeightArrowLength.value,
-        finishedArrowWeightGr: elements.spineFromWeightFinishedArrowWeight.value,
-        arrowPassOffsetMm: elements.spineFromWeightArrowPassOffset.value
+      var initial = window.ArcherModel.estimateBareShaftSpine({
+        bowType: elements.tuningBowType.value,
+        drawWeightLb: elements.tuningDrawWeight.value,
+        drawLengthIn: elements.tuningDrawLength.value,
+        shaftLengthIn: elements.tuningShaftLength.value,
+        gripWidthMm: elements.tuningGripWidth.value,
+        arrowPassOffsetMm: elements.tuningArrowPassOffset.value
       });
-
-      elements.spineFromWeightError.textContent = "";
-      elements.spineFromWeightSummary.innerHTML = "";
-      addDefinitionRow(elements.spineFromWeightSummary, "推荐 ATA 静态 Spine", formatSpineScreening(result));
-      addDefinitionRow(elements.spineFromWeightSummary, "推荐静态挠度", result.centerDeflectionIn + " in");
-      addDefinitionRow(elements.spineFromWeightSummary, "成品箭重 / GPP", result.finishedArrowWeightGr + " gr / " + (result.finishedArrowWeightGr / Number(elements.spineFromWeightDrawWeight.value)).toFixed(2));
-      addDefinitionRow(elements.spineFromWeightSummary, "等效拉重", result.effectiveDrawWeightLb + " lb（箭重 " + signedNumber(result.arrowWeightAdjustmentLb) + " lb，偏差 " + signedNumber(result.offsetAdjustmentLb) + " lb）");
-    } catch (error) {
-      elements.spineFromWeightError.textContent = error.message;
-    }
-  }
-
-  function renderWeightFromSpine() {
-    try {
-      var result = window.ArcherModel.estimateFinishedArrowWeight({
-        bowType: elements.weightFromSpineBowType.value,
-        drawWeightLb: elements.weightFromSpineDrawWeight.value,
-        shaftLengthIn: elements.weightFromSpineArrowLength.value,
-        ataSpine: elements.weightFromSpineAtaSpine.value,
-        arrowPassOffsetMm: elements.weightFromSpineArrowPassOffset.value
+      var adjustment = window.ArcherModel.recommendPointWeightAdjustment({
+        drawWeightLb: elements.tuningDrawWeight.value,
+        bareArrowWeightGr: elements.tuningBareArrowWeight.value,
+        pointWeightGr: elements.tuningPointWeight.value,
+        ataSpine: elements.tuningAtaSpine.value,
+        verticalFeedback: elements.tuningVerticalFeedback.value,
+        lateralFeedback: elements.tuningLateralFeedback.value
       });
-
-      elements.weightFromSpineError.textContent = "";
-      elements.weightFromSpineSummary.innerHTML = "";
-      addDefinitionRow(elements.weightFromSpineSummary, "动态等效成品箭重", result.finishedArrowWeightGr + " gr");
-      addDefinitionRow(elements.weightFromSpineSummary, "对应 GPP", result.gpp);
-      addDefinitionRow(elements.weightFromSpineSummary, "输入 ATA 静态 Spine", result.ataSpine + "（挠度 " + result.staticDeflectionIn + " in）");
-      addDefinitionRow(elements.weightFromSpineSummary, "反算等效拉重", result.requiredEffectiveDrawWeightLb + " lb（偏差修正 " + signedNumber(result.offsetAdjustmentLb) + " lb）");
+      elements.tuningError.textContent = "";
+      elements.initialSpineSummary.innerHTML = "";
+      elements.pointTuneSummary.innerHTML = "";
+      addDefinitionRow(elements.initialSpineSummary, "裸箭 ATA 静态 Spine 初筛", initial.lowerAtaSpine + "-" + initial.upperAtaSpine + "（中心 " + initial.centerAtaSpine + "）");
+      addDefinitionRow(elements.initialSpineSummary, "对应静态挠度", initial.centerDeflectionIn + " in");
+      addDefinitionRow(elements.initialSpineSummary, "箭杆长 - 拉距", initial.shaftClearanceIn + " in");
+      addDefinitionRow(elements.initialSpineSummary, "中心线偏差", initial.arrowPassOffsetMm + " mm（" + (initial.offsetSource === "grip-width-half" ? "弓把宽度的一半" : "手动/弓型默认") + "）");
+      addDefinitionRow(elements.pointTuneSummary, "下一次箭头系统重量", adjustment.targetPointWeightGr + " gr（" + signedNumber(adjustment.pointDeltaGr) + " gr）");
+      addDefinitionRow(elements.pointTuneSummary, "成品箭重 / GPP", adjustment.targetFinishedArrowWeightGr + " gr / " + adjustment.targetGpp);
+      addDefinitionRow(elements.pointTuneSummary, "相邻 Spine 试箭", adjustment.needsSpineChange ? adjustment.targetAtaSpine + "（" + (adjustment.ataSpineDelta < 0 ? "更硬" : "更软") + " " + Math.abs(adjustment.ataSpineDelta) + "）" : "保持当前 " + elements.tuningAtaSpine.value);
     } catch (error) {
-      elements.weightFromSpineError.textContent = error.message;
+      elements.tuningError.textContent = error.message;
     }
   }
 
@@ -321,7 +309,7 @@
     var values = [
       "实测满拉 " + row.drawWeightLb + " lb",
       "测试箭杆 " + row.testShaftLengthIn + " in",
-      "成品箭重 " + (finishedArrowWeight ? finishedArrowWeight + " gr" : "按默认 GPP 初筛"),
+      "成品箭重 " + (finishedArrowWeight ? finishedArrowWeight + " gr（仅复核）" : "未填；不参与初筛"),
       "来源/型号 " + (shaftModel || "未填，不影响计算")
     ];
     if (row.bowType === "compound") {
