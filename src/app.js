@@ -26,20 +26,6 @@
       clearButton: document.getElementById("clearButton"),
       jsonButton: document.getElementById("jsonButton"),
       csvButton: document.getElementById("csvButton"),
-      equipmentBowType: document.getElementById("equipmentBowType"),
-      equipmentDrawWeights: document.getElementById("equipmentDrawWeights"),
-      equipmentDrawLengths: document.getElementById("equipmentDrawLengths"),
-      equipmentMaterial: document.getElementById("equipmentMaterial"),
-      equipmentArrowPassOffset: document.getElementById("equipmentArrowPassOffset"),
-      equipmentFinishedArrowWeight: document.getElementById("equipmentFinishedArrowWeight"),
-      equipmentShaftModel: document.getElementById("equipmentShaftModel"),
-      equipmentReferenceAtaSpine: document.getElementById("equipmentReferenceAtaSpine"),
-      equipmentReferenceShaftLength: document.getElementById("equipmentReferenceShaftLength"),
-      equipmentReferenceDrawWeight: document.getElementById("equipmentReferenceDrawWeight"),
-      equipmentScreeningBand: document.getElementById("equipmentScreeningBand"),
-      equipmentButton: document.getElementById("equipmentButton"),
-      equipmentError: document.getElementById("equipmentError"),
-      equipmentTable: document.getElementById("equipmentTable"),
       tuningBowType: document.getElementById("tuningBowType"),
       tuningDrawWeight: document.getElementById("tuningDrawWeight"),
       tuningDrawLength: document.getElementById("tuningDrawLength"),
@@ -54,6 +40,8 @@
       tuningButton: document.getElementById("tuningButton"),
       tuningError: document.getElementById("tuningError"),
       initialSpineSummary: document.getElementById("initialSpineSummary"),
+      carbonClearanceSummary: document.getElementById("carbonClearanceSummary"),
+      naturalClearanceSummary: document.getElementById("naturalClearanceSummary"),
       pointTuneSummary: document.getElementById("pointTuneSummary")
     };
 
@@ -61,7 +49,6 @@
     session = window.ArcherStorage.loadSession() || window.ArcherModel.createSession(readForm());
     writeForm(session);
     render();
-    renderEquipmentMatrix();
     renderTwoStageTuning();
   }
 
@@ -98,7 +85,6 @@
       download("archer-session-" + session.id + ".csv", window.ArcherModel.toCsv(session), "text/csv");
     });
 
-    elements.equipmentButton.addEventListener("click", renderEquipmentMatrix);
     elements.tuningButton.addEventListener("click", renderTwoStageTuning);
   }
 
@@ -223,44 +209,9 @@
     });
   }
 
-  function renderEquipmentMatrix() {
-    try {
-      var arrowPassOffsetMm = Number(elements.equipmentArrowPassOffset.value || 0);
-      setTableHeaders(elements.equipmentTable, ["弓型", "拉重", "AMO 拉距", "测试箭杆", "ATA 静态 Spine 筛选范围", "选箭复核数据", "Nocking", "箭台 / 中心射出"]);
-      var rows = window.ArcherModel.buildEquipmentMatrix({
-        bowType: elements.equipmentBowType.value,
-        drawWeights: elements.equipmentDrawWeights.value,
-        drawLengths: elements.equipmentDrawLengths.value,
-        arrowPassOffsetMm: arrowPassOffsetMm,
-        referenceAtaSpine: elements.equipmentReferenceAtaSpine.value,
-        referenceShaftLengthIn: elements.equipmentReferenceShaftLength.value,
-        referenceDrawWeightLb: elements.equipmentReferenceDrawWeight.value,
-        screeningBandPercent: elements.equipmentScreeningBand.value,
-        finishedArrowWeightGr: elements.equipmentFinishedArrowWeight.value
-      });
-
-      elements.equipmentError.textContent = "";
-      elements.equipmentTable.innerHTML = "";
-      rows.forEach(function (row) {
-        addTableRow(elements.equipmentTable, [
-          displayBowType(row.bowType),
-          row.drawWeightLb,
-          row.drawLengthAmoIn,
-          row.testShaftLengthIn + " in",
-          formatSpineScreening(row.spineScreening),
-          formatChartInputs(row),
-          row.nockingPoint,
-          "offset " + arrowPassOffsetMm + " mm; " + row.rest + "; " + row.centerShot
-        ]);
-      });
-    } catch (error) {
-      elements.equipmentError.textContent = error.message;
-    }
-  }
-
   function renderTwoStageTuning() {
     try {
-      var initial = window.ArcherModel.estimateBareShaftSpine({
+      var initial = window.ArcherModel.calculateHandleClearanceRanges({
         bowType: elements.tuningBowType.value,
         drawWeightLb: elements.tuningDrawWeight.value,
         drawLengthIn: elements.tuningDrawLength.value,
@@ -278,11 +229,14 @@
       });
       elements.tuningError.textContent = "";
       elements.initialSpineSummary.innerHTML = "";
+      elements.carbonClearanceSummary.innerHTML = "";
+      elements.naturalClearanceSummary.innerHTML = "";
       elements.pointTuneSummary.innerHTML = "";
-      addDefinitionRow(elements.initialSpineSummary, "裸箭 ATA 静态 Spine 初筛", initial.lowerAtaSpine + "-" + initial.upperAtaSpine + "（中心 " + initial.centerAtaSpine + "）");
-      addDefinitionRow(elements.initialSpineSummary, "对应静态挠度", initial.centerDeflectionIn + " in");
       addDefinitionRow(elements.initialSpineSummary, "箭杆长 - 拉距", initial.shaftClearanceIn + " in");
       addDefinitionRow(elements.initialSpineSummary, "中心线偏差", initial.arrowPassOffsetMm + " mm（" + (initial.offsetSource === "grip-width-half" ? "弓把宽度的一半" : "手动/弓型默认") + "）");
+      addDefinitionRow(elements.initialSpineSummary, "理论横向激励", initial.lateralForceLb + " lb");
+      renderMaterialClearance(elements.carbonClearanceSummary, initial.materials.carbon, initial.noHandleClearanceRequired);
+      renderMaterialClearance(elements.naturalClearanceSummary, initial.materials.bamboo_wood, initial.noHandleClearanceRequired);
       addDefinitionRow(elements.pointTuneSummary, "下一次箭头系统重量", adjustment.targetPointWeightGr + " gr（" + signedNumber(adjustment.pointDeltaGr) + " gr）");
       addDefinitionRow(elements.pointTuneSummary, "成品箭重 / GPP", adjustment.targetFinishedArrowWeightGr + " gr / " + adjustment.targetGpp);
       addDefinitionRow(elements.pointTuneSummary, "相邻 Spine 试箭", adjustment.needsSpineChange ? adjustment.targetAtaSpine + "（" + (adjustment.ataSpineDelta < 0 ? "更硬" : "更软") + " " + Math.abs(adjustment.ataSpineDelta) + "）" : "保持当前 " + elements.tuningAtaSpine.value);
@@ -291,51 +245,23 @@
     }
   }
 
-  function formatSpineScreening(screening) {
-    if (!screening) {
-      return "填写基准箭后生成";
+  function renderMaterialClearance(list, result, noHandleClearanceRequired) {
+    if (noHandleClearanceRequired) {
+      addDefinitionRow(list, "绕把动态挠度", "0 mm（中心射出，无侧向绕把需求）");
+      addDefinitionRow(list, "静态 Spine", "不由绕把净空约束");
+      return;
     }
-    var source = screening.source === "calibrated" ? "基准校准" : "默认初筛";
-    return screening.lowerAtaSpine + "-" + screening.upperAtaSpine + "（中心 " + screening.centerAtaSpine + "，±" + screening.bandPercent + "%；" + source + "）";
+    addDefinitionRow(list, "理论动态挠度", result.dynamicDeflectionMinMm + "-" + result.dynamicDeflectionMaxMm + " mm");
+    addDefinitionRow(list, "所需静态挠度", result.staticDeflectionMinIn + "-" + result.staticDeflectionMaxIn + " in");
+    addDefinitionRow(list, "ATA Spine 区间", result.ataSpineMin + "-" + result.ataSpineMax);
+    if (result.woodSpinePoundsMin != null) {
+      addDefinitionRow(list, "传统木箭 Spine", result.woodSpinePoundsMin + "-" + result.woodSpinePoundsMax + " lb（26/挠度近似）");
+    }
+    addDefinitionRow(list, "模型假设", result.assumedDiameterMm + " mm 杆径；动态系数 " + result.dynamicFactorMin + "-" + result.dynamicFactorMax);
   }
 
   function signedNumber(value) {
     return (value > 0 ? "+" : "") + value;
-  }
-
-  function formatChartInputs(row) {
-    var finishedArrowWeight = elements.equipmentFinishedArrowWeight.value.trim();
-    var shaftModel = elements.equipmentShaftModel.value.trim();
-    var values = [
-      "实测满拉 " + row.drawWeightLb + " lb",
-      "测试箭杆 " + row.testShaftLengthIn + " in",
-      "成品箭重 " + (finishedArrowWeight ? finishedArrowWeight + " gr（仅复核）" : "未填；不参与初筛"),
-      "来源/型号 " + (shaftModel || "未填，不影响计算")
-    ];
-    if (row.bowType === "compound") {
-      values.push("另填凸轮/弦距与撒放方式");
-    }
-    return values.join("；");
-  }
-
-  function addTableRow(body, values) {
-    var row = document.createElement("tr");
-    values.forEach(function (value) {
-      var cell = document.createElement("td");
-      cell.textContent = value;
-      row.appendChild(cell);
-    });
-    body.appendChild(row);
-  }
-
-  function setTableHeaders(body, labels) {
-    var headerRow = body.closest("table").querySelector("thead tr");
-    headerRow.innerHTML = "";
-    labels.forEach(function (label) {
-      var cell = document.createElement("th");
-      cell.textContent = label;
-      headerRow.appendChild(cell);
-    });
   }
 
   function addDefinitionRow(list, label, value) {
