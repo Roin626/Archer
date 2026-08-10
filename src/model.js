@@ -183,6 +183,25 @@
   var ARROW_WEIGHT_STEP_GR = 25;
   var EFFECTIVE_DRAW_PER_ARROW_WEIGHT_STEP_LB = 3;
   var EFFECTIVE_DRAW_PER_OFFSET_MM_LB = 0.25;
+  var ATA_TEST_LOAD_LB = 1.94;
+  var ATA_TEST_SPAN_IN = 28;
+  var MM_PER_INCH = 25.4;
+  var handleClearanceMaterials = {
+    carbon: {
+      label: "碳箭杆",
+      assumedDiameterMm: 6,
+      extraClearanceMm: 2,
+      dynamicFactorMin: 1.6,
+      dynamicFactorMax: 2.0
+    },
+    bamboo_wood: {
+      label: "竹 / 木箭杆",
+      assumedDiameterMm: 8,
+      extraClearanceMm: 3,
+      dynamicFactorMin: 1.3,
+      dynamicFactorMax: 1.7
+    }
+  };
 
   function normalizeBowType(bowType) {
     var normalized = String(bowType || "").trim().toLowerCase();
@@ -332,6 +351,93 @@
       bandPercent: baseline.bandPercent,
       effectiveDrawWeightLb: Number(effectiveDrawWeightLb.toFixed(2)),
       offsetAdjustmentLb: Number(offsetAdjustmentLb.toFixed(2))
+    };
+  }
+
+  function calculateHandleClearanceRanges(input) {
+    var bowType = normalizeBowType(input.bowType);
+    var drawWeightLb = positiveNumber(input.drawWeightLb, "实测满拉拉重");
+    var drawLengthIn = positiveNumber(input.drawLengthIn, "实测拉距");
+    var shaftLengthIn = positiveNumber(input.shaftLengthIn, "箭杆长");
+    var baseline = genericSpineBaselines[bowType];
+    var gripWidthMm = input.gripWidthMm === "" || input.gripWidthMm == null
+      ? null
+      : nonNegativeNumber(input.gripWidthMm, "弓把宽度");
+    var manualOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null
+      ? null
+      : nonNegativeNumber(input.arrowPassOffsetMm, "出箭点距中心线");
+    var useGripWidth = bowType === "shelfless_traditional" && gripWidthMm != null && gripWidthMm > 0;
+    var arrowPassOffsetMm = useGripWidth
+      ? gripWidthMm / 2
+      : manualOffsetMm == null ? baseline.referenceOffsetMm : manualOffsetMm;
+    if (bowType === "shelfless_traditional" && !useGripWidth && manualOffsetMm == null) {
+      throw new Error("无台传统弓请测量弓把宽度，或直接填写出箭点距中心线");
+    }
+    var shaftClearanceIn = shaftLengthIn - drawLengthIn;
+    if (shaftClearanceIn < 0) {
+      throw new Error("箭杆长不能短于以箭尾喉口至弓把 pivot 测得的拉距");
+    }
+
+    var offsetIn = arrowPassOffsetMm / MM_PER_INCH;
+    var lateralForceLb = arrowPassOffsetMm === 0 ? 0 : drawWeightLb * offsetIn / drawLengthIn;
+    var beamLengthFactor = Math.pow(shaftLengthIn / ATA_TEST_SPAN_IN, 3);
+    var responseScale = lateralForceLb / ATA_TEST_LOAD_LB * beamLengthFactor;
+    var materials = {};
+
+    Object.keys(handleClearanceMaterials).forEach(function (key) {
+      var settings = handleClearanceMaterials[key];
+      if (arrowPassOffsetMm === 0) {
+        materials[key] = {
+          label: settings.label,
+          dynamicDeflectionMinMm: 0,
+          dynamicDeflectionMaxMm: 0,
+          staticDeflectionMinIn: null,
+          staticDeflectionMaxIn: null,
+          ataSpineMin: null,
+          ataSpineMax: null,
+          assumedDiameterMm: settings.assumedDiameterMm,
+          dynamicFactorMin: settings.dynamicFactorMin,
+          dynamicFactorMax: settings.dynamicFactorMax,
+          woodSpinePoundsMin: null,
+          woodSpinePoundsMax: null
+        };
+        return;
+      }
+
+      var dynamicDeflectionMinMm = arrowPassOffsetMm + settings.assumedDiameterMm / 2;
+      var dynamicDeflectionMaxMm = dynamicDeflectionMinMm + settings.extraClearanceMm;
+      var staticDeflectionMinIn = dynamicDeflectionMinMm / MM_PER_INCH
+        / (settings.dynamicFactorMax * responseScale);
+      var staticDeflectionMaxIn = dynamicDeflectionMaxMm / MM_PER_INCH
+        / (settings.dynamicFactorMin * responseScale);
+      materials[key] = {
+        label: settings.label,
+        dynamicDeflectionMinMm: Number(dynamicDeflectionMinMm.toFixed(1)),
+        dynamicDeflectionMaxMm: Number(dynamicDeflectionMaxMm.toFixed(1)),
+        staticDeflectionMinIn: Number(staticDeflectionMinIn.toFixed(3)),
+        staticDeflectionMaxIn: Number(staticDeflectionMaxIn.toFixed(3)),
+        ataSpineMin: Math.round(staticDeflectionMinIn * 1000),
+        ataSpineMax: Math.round(staticDeflectionMaxIn * 1000),
+        assumedDiameterMm: settings.assumedDiameterMm,
+        dynamicFactorMin: settings.dynamicFactorMin,
+        dynamicFactorMax: settings.dynamicFactorMax,
+        woodSpinePoundsMin: key === "bamboo_wood" ? Number((26 / staticDeflectionMaxIn).toFixed(1)) : null,
+        woodSpinePoundsMax: key === "bamboo_wood" ? Number((26 / staticDeflectionMinIn).toFixed(1)) : null
+      };
+    });
+
+    return {
+      bowType: bowType,
+      drawWeightLb: Number(drawWeightLb.toFixed(2)),
+      drawLengthIn: Number(drawLengthIn.toFixed(3)),
+      shaftLengthIn: Number(shaftLengthIn.toFixed(3)),
+      shaftClearanceIn: Number(shaftClearanceIn.toFixed(3)),
+      arrowPassOffsetMm: Number(arrowPassOffsetMm.toFixed(1)),
+      offsetSource: useGripWidth ? "grip-width-half" : "manual-or-default",
+      lateralForceLb: Number(lateralForceLb.toFixed(3)),
+      beamLengthFactor: Number(beamLengthFactor.toFixed(3)),
+      noHandleClearanceRequired: arrowPassOffsetMm === 0,
+      materials: materials
     };
   }
 
@@ -552,6 +658,7 @@
     createShot: createShot,
     buildEquipmentMatrix: buildEquipmentMatrix,
     calculateStaticSpineScreening: calculateStaticSpineScreening,
+    calculateHandleClearanceRanges: calculateHandleClearanceRanges,
     estimateBareShaftSpine: estimateBareShaftSpine,
     estimateStaticSpine: estimateStaticSpine,
     estimateFinishedArrowWeight: estimateFinishedArrowWeight,
