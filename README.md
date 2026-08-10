@@ -20,7 +20,7 @@ Windows 下双击：
 start_archer.bat
 ```
 
-启动器会打开 `index.html`。网页里可以记录落点、生成配件配置矩阵和计算 spine；控制台菜单保留同样的 CLI 入口和测试入口。
+启动器会打开 `index.html`。网页里可以记录落点，并计算碳箭杆与竹木箭杆的绕把动态挠度和静态 Spine 候选；历史配件矩阵只保留 CLI 入口。
 
 也可以直接用浏览器打开 `index.html`。当前版本不需要后端、不需要安装依赖，数据默认保存在浏览器 `localStorage`。
 
@@ -30,8 +30,8 @@ start_archer.bat
 - 点击靶面记录落点。
 - 标记箭型：羽箭、裸杆、测试箭。
 - 自动计算环值和组散布。
-- 在网页内生成不同拉重、AMO 拉距下的配件配置矩阵。
-- 在网页内先按拉距、拉重和箭杆长初筛裸箭静态 Spine，再按实射落点反馈调整箭头系统重量。
+- 在网页内按拉重、拉距、箭杆长和出箭点中心线偏差，分别计算碳箭杆与竹木箭杆的绕把动态挠度和静态 Spine 候选区间。
+- 再按实射落点反馈调整箭头系统重量和相邻 Spine 试箭方向。
 - 导出 JSON/CSV。
 - 本地保存最近 session。
 
@@ -49,7 +49,7 @@ start_archer.bat
 python scripts/spine_estimator.py from-weight --bow-type olympic_recurve --draw-weight 30 --shaft-length 30 --finished-arrow-weight 270 --arrow-pass-offset-mm 0
 ```
 
-网页的“两阶段选箭与落点调箭”使用不同的工作流：第一阶段明确区分拉距（箭尾喉口至弓把 pivot）与箭杆长（箭尾喉口至箭杆端部），不让箭头重量参与初筛；第二阶段按高/中/低与偏硬/中性/偏软的落点判断，输出下一次箭头系统重量和相邻 Spine 试箭方向。
+网页的“两阶段选箭与落点调箭”使用不同的工作流：第一阶段明确区分拉距（箭尾喉口至弓把 pivot）与箭杆长（箭尾喉口至箭杆端部），先计算几何绕把净空，再按拉重、拉距和箭杆长换算碳箭杆及竹木箭杆的静态 Spine 候选；第二阶段按高/中/低与偏硬/中性/偏软的落点判断，输出下一次箭头系统重量和相邻 Spine 试箭方向。
 
 ```powershell
 python scripts/spine_estimator.py from-spine --bow-type olympic_recurve --draw-weight 30 --shaft-length 30 --ata-spine 700 --arrow-pass-offset-mm 0
@@ -57,7 +57,7 @@ python scripts/spine_estimator.py from-spine --bow-type olympic_recurve --draw-w
 
 `scripts/arrow_spine.py` 仍用于按箭杆 GPI、箭头系统和尾部组件核算成品箭重、GPP、ATA 静态挠度及厂家最低 GPP。两类工具的职责不混合。
 
-## 模块化配件配置矩阵
+## 配件配置矩阵 CLI（网页已移除）
 
 按不同拉重和 AMO 拉距生成推荐表：
 
