@@ -185,6 +185,7 @@ function Run-Tests {
   )
 
   Invoke-Python $PythonCommand @("-m", "unittest", "discover", "-s", "tests")
+  node (Join-Path (Get-RepoRoot) "tests\test_web_model.js")
 }
 
 function Show-Docs {
