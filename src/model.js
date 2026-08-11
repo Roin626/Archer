@@ -143,7 +143,7 @@
     american_hunting: {
       rest: "shelf/皮台",
       nockingPoint: "+1/4 到 +1/2 in",
-      centerShot: "有弓窗美式猎弓，按弓窗离中心程度选择相邻 spine 试箭"
+      centerShot: "有弓窗美式猎弓，按弓窗离中心程度选择相邻挠度试箭"
     },
     barebow: {
       rest: "磁性箭台 + 中等压力 plunger",
@@ -163,7 +163,7 @@
     shelfless_traditional: {
       rest: "无弓窗，搭箭手/虎口侧",
       nockingPoint: "+3/8 到 +3/4 in",
-      centerShot: "无台传统弓，测量出箭点距中心线并用相邻 spine 试箭"
+      centerShot: "无台传统弓，测量出箭点距中心线并用相邻挠度试箭"
     }
   };
 
@@ -303,7 +303,7 @@
   }
 
   function ataSpineToMillimeters(ataSpine) {
-    return finiteNumber(ataSpine, "ATA Spine") / 1000 * MM_PER_INCH;
+    return finiteNumber(ataSpine, "ATA 挠度") / 1000 * MM_PER_INCH;
   }
 
   function millimetersToAtaSpine(millimeters) {
@@ -336,7 +336,7 @@
     var secondMomentMm4 = Math.PI / 64 * (
       Math.pow(outerDiameterMm, 4) - Math.pow(innerDiameterMm, 4)
     );
-    var staticDeflectionMm = ataSpineToMillimeters(positiveNumber(input.ataSpine, "裸箭 ATA 静态 Spine"));
+    var staticDeflectionMm = ataSpineToMillimeters(positiveNumber(input.ataSpine, "裸箭 ATA 静态挠度"));
     var testSpanMm = ATA_TEST_SPAN_IN * MM_PER_INCH;
     var testLoadN = ATA_TEST_LOAD_LB * NEWTONS_PER_POUND_FORCE;
     var flexuralRigidityNmm2 = testLoadN * Math.pow(testSpanMm, 3) / (48 * staticDeflectionMm);
@@ -367,7 +367,7 @@
     var shaftLengthIn = positiveNumber(input.shaftLengthIn, "箭杆长");
     var bareArrowWeightGr = positiveNumber(input.bareArrowWeightGr, "裸箭重量");
     var pointWeightGr = nonNegativeNumber(input.pointWeightGr, "箭头系统重量");
-    var staticDeflectionIn = positiveNumber(input.ataSpine, "裸箭 ATA 静态 Spine") / 1000;
+    var staticDeflectionIn = positiveNumber(input.ataSpine, "裸箭 ATA 静态挠度") / 1000;
     var materialKey = normalizeArrowMaterial(input.arrowMaterial);
     var material = handleClearanceMaterials[materialKey];
     var shaftDiameterMm = input.shaftDiameterMm === "" || input.shaftDiameterMm == null
@@ -807,7 +807,7 @@
     var drawWeightLb = positiveNumber(input.drawWeightLb, "实测满拉拉重");
     var bareArrowWeightGr = positiveNumber(input.bareArrowWeightGr, "裸箭重量");
     var pointWeightGr = nonNegativeNumber(input.pointWeightGr, "箭头系统重量");
-    var ataSpine = positiveNumber(input.ataSpine, "裸箭 ATA 静态 Spine");
+    var ataSpine = positiveNumber(input.ataSpine, "裸箭 ATA 静态挠度");
     var verticalFeedback = String(input.verticalFeedback || "center");
     var lateralFeedback = String(input.lateralFeedback || "neutral");
     if (["high", "center", "low"].indexOf(verticalFeedback) === -1) {
@@ -845,7 +845,7 @@
     var shaftLengthIn = positiveNumber(input.shaftLengthIn, "箭杆长度");
     var staticDeflectionIn = input.ataSpine === "" || input.ataSpine == null
       ? positiveNumber(input.staticDeflectionIn, "静态挠度")
-      : positiveNumber(input.ataSpine, "ATA 静态 Spine") / 1000;
+      : positiveNumber(input.ataSpine, "ATA 静态挠度") / 1000;
     var baseline = genericSpineBaselines[bowType];
     var arrowPassOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null
       ? baseline.referenceOffsetMm
@@ -858,7 +858,7 @@
     var finishedArrowWeightGr = referenceFinishedArrowWeightGr
       + (requiredEffectiveDrawWeightLb - drawWeightLb - offsetAdjustmentLb) / EFFECTIVE_DRAW_PER_ARROW_WEIGHT_STEP_LB * ARROW_WEIGHT_STEP_GR;
     if (finishedArrowWeightGr <= 0) {
-      throw new Error("该挠度与输入条件无法反算出正的成品箭重；请检查弓型、中心线偏差和静态 Spine");
+      throw new Error("该挠度与输入条件无法反算出正的成品箭重；请检查弓型、中心线偏差和静态挠度");
     }
     return {
       bowType: bowType,
@@ -920,9 +920,9 @@
   function calculateStaticSpineScreening(input) {
     var referenceDeflectionIn = input.referenceAtaSpine === "" || input.referenceAtaSpine == null
       ? positiveNumber(input.referenceDeflectionIn, "基准箭静态挠度")
-      : positiveNumber(input.referenceAtaSpine, "基准箭 ATA Spine") / 1000;
+      : positiveNumber(input.referenceAtaSpine, "基准箭 ATA 挠度") / 1000;
     if (referenceDeflectionIn > 2) {
-      throw new Error("基准箭静态挠度必须以英寸填写（例如 0.600），或改填 ATA Spine 编号（例如 600）");
+      throw new Error("基准箭静态挠度必须以英寸填写（例如 0.600），或改填 ATA 挠度编号（例如 600）");
     }
     var referenceShaftLengthIn = positiveNumber(input.referenceShaftLengthIn, "基准箭杆长");
     var referenceDrawWeightLb = positiveNumber(input.referenceDrawWeightLb, "基准箭实测拉重");
