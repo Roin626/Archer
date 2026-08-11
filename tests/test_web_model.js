@@ -110,6 +110,7 @@ assert.ok(centerShot.current.dynamicDeflectionMinMm > 10);
 assert.ok(centerShot.current.dynamicDeflectionMaxMm > centerShot.current.dynamicDeflectionMinMm);
 assert.equal(Math.round(centerShot.recommendation.finalLowerIn * 1000), 537);
 assert.equal(Math.round(centerShot.recommendation.finalUpperIn * 1000), 727);
+assert.deepEqual(centerShot.recommendation.productAtaCandidates, [550, 600, 650, 700]);
 assert.equal(centerShot.overallMatch, true);
 
 const sameSpineThickerWall = ArcherModel.analyzeDynamicSpine({
@@ -148,13 +149,25 @@ assert.deepEqual(
   [traditionalDynamic.recommendation.requiredDynamicMinMm, traditionalDynamic.recommendation.requiredDynamicMaxMm],
   [29, 32]
 );
-assert.equal(Math.round(traditionalDynamic.recommendation.finalLowerIn * 1000), 639);
+assert.equal(Math.round(traditionalDynamic.recommendation.finalLowerIn * 1000), 578);
 assert.equal(Math.round(traditionalDynamic.recommendation.finalUpperIn * 1000), 867);
+assert.equal(traditionalDynamic.recommendation.clearanceLowerIn, undefined);
+assert.deepEqual(traditionalDynamic.recommendation.productAtaCandidates, [600, 650, 700, 750, 800]);
 assert.ok(traditionalDynamic.adjustments.targetPointWeightGr > 100);
 assert.equal(traditionalDynamic.adjustments.pointClearancePass, true);
 assert.equal(traditionalDynamic.clearanceStatus, "overlap");
 assert.equal(traditionalDynamic.adjustments.pointClearanceStatus, "overlap");
 assert.equal(traditionalDynamic.section.sectionType, "hollow");
+assert.equal(traditionalDynamic.adjustments.targetSource, "handle-clearance");
+assert.equal(traditionalDynamic.adjustments.targetDynamicCenterMm, 30.5);
+assert.ok(Math.abs(
+  (traditionalDynamic.adjustments.pointDynamicMinMm + traditionalDynamic.adjustments.pointDynamicMaxMm) / 2
+    - traditionalDynamic.adjustments.targetDynamicCenterMm
+) < 1e-6);
+assert.ok(Math.abs(
+  (traditionalDynamic.adjustments.lengthDynamicMinMm + traditionalDynamic.adjustments.lengthDynamicMaxMm) / 2
+    - traditionalDynamic.adjustments.targetDynamicCenterMm
+) < 1e-6);
 
 const adjustment = ArcherModel.recommendPointWeightAdjustment({
   drawWeightLb: 30,
