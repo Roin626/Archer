@@ -288,6 +288,14 @@
     return finiteNumber(millimeters, "毫米") / MM_PER_INCH;
   }
 
+  function ataSpineToMillimeters(ataSpine) {
+    return finiteNumber(ataSpine, "ATA Spine") / 1000 * MM_PER_INCH;
+  }
+
+  function millimetersToAtaSpine(millimeters) {
+    return finiteNumber(millimeters, "静态测试位移") / MM_PER_INCH * 1000;
+  }
+
   function clamp(value, minimum, maximum) {
     return Math.min(maximum, Math.max(minimum, value));
   }
@@ -943,6 +951,8 @@
     poundsToGrams: poundsToGrams,
     inchesToMillimeters: inchesToMillimeters,
     millimetersToInches: millimetersToInches,
+    ataSpineToMillimeters: ataSpineToMillimeters,
+    millimetersToAtaSpine: millimetersToAtaSpine,
     estimateBareShaftSpine: estimateBareShaftSpine,
     estimateStaticSpine: estimateStaticSpine,
     estimateFinishedArrowWeight: estimateFinishedArrowWeight,
