@@ -155,11 +155,35 @@
             <div><h3>第二阶段：落点反馈调箭</h3><dl id="pointTuneSummary" class="summary tool-summary"></dl></div>
           </div>
         </section>
+
+        <section class="panel tool-panel converter-panel">
+          <div class="panel-heading compact-heading">
+            <h2>单位换算</h2>
+          </div>
+          <div class="converter-grid">
+            <fieldset class="converter-group">
+              <legend>质量</legend>
+              <div class="converter-row">
+                <label>克（g）<input id="gramsInput" type="number" step="any" value="100" inputmode="decimal"></label>
+                <span class="converter-symbol" aria-hidden="true">⇄</span>
+                <label>磅（lb）<input id="poundsInput" type="number" step="any" inputmode="decimal"></label>
+              </div>
+            </fieldset>
+            <fieldset class="converter-group">
+              <legend>长度</legend>
+              <div class="converter-row">
+                <label>英寸（in）<input id="inchesInput" type="number" step="any" value="1" inputmode="decimal"></label>
+                <span class="converter-symbol" aria-hidden="true">⇄</span>
+                <label>毫米（mm）<input id="millimetersInput" type="number" step="any" inputmode="decimal"></label>
+              </div>
+            </fieldset>
+          </div>
+        </section>
       </section>
     </main>
 
-    <script src="src/model.clearance.js"></script>
+    <script src="src/model.units.js"></script>
     <script src="src/storage.js"></script>
-    <script src="src/app.clearance.js"></script>
+    <script src="src/app.units.js"></script>
   </body>
 </html>
