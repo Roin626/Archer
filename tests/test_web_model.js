@@ -158,6 +158,7 @@ assert.equal(traditionalDynamic.adjustments.pointClearancePass, true);
 assert.equal(traditionalDynamic.clearanceStatus, "uncertain");
 assert.equal(traditionalDynamic.clearanceMatch, false);
 assert.equal(traditionalDynamic.adjustments.pointClearanceStatus, "satisfied");
+assert.equal(traditionalDynamic.adjustments.lengthClearanceStatus, "satisfied");
 assert.equal(traditionalDynamic.section.sectionType, "hollow");
 assert.equal(traditionalDynamic.adjustments.targetSource, "equipment-screening");
 assert.equal(traditionalDynamic.adjustments.targetDynamicMm, 29);
