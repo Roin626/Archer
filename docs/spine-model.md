@@ -147,14 +147,25 @@ shafts. The interface also lists common nominal ATA values that fall inside
 that range; these are generic candidates and must be checked against the actual
 manufacturer catalogue.
 
-The handle-clearance range is displayed only in millimeters because it is a
-geometric displacement threshold, not an ATA static specification. With static
-deflection fixed, the calculator solves point-system mass and shaft length as
-two alternative ways to bring the predicted dynamic range back toward the
-basic screening recommendation. A theoretical shaft length below measured draw
-length is still displayed for auditability but is explicitly marked unsafe and
-must not be used as a cutting instruction. The two adjustment schemes are
-alternatives, not instructions to apply both changes simultaneously.
+The basic screening calculation uses a fixed 100 gr point-system reference so
+the purchase target does not move when a point-weight adjustment is fed back
+into the calculator. Handle clearance is a one-sided minimum shown only in
+millimeters because it is a geometric displacement threshold, not an ATA
+static specification. The calculator does not infer an excessive-deflection
+limit from handle geometry.
+
+The hard-side dynamic calibration target is:
+
+```text
+T = max(basic_dynamic_min, handle_clearance_min)
+```
+
+If `T` exceeds `basic_dynamic_max`, the two constraints conflict and adjustment
+values are withheld. Otherwise, with static deflection fixed, the calculator
+solves point-system mass and shaft length as two alternative ways to make the
+lower end of the predicted dynamic range approach `T`. A theoretical shaft
+length below measured draw length is displayed for auditability but is marked
+unsafe and must not be used as a cutting instruction.
 
 Use all results only to select adjacent test shafts and test configurations.
 Final acceptance still requires bare-shaft or paper tuning. Static spine alone
