@@ -27,6 +27,35 @@ E * I = P * L^3 / (48 * delta)
 where `P = 1.94 lb`, `L = 28 in`, and `delta` is the measured deflection in
 inches. `EI` is reported in `lb in2` for this unit system.
 
+## Shaft cross-section and material
+
+Carbon and laminated-bamboo shafts are treated as hollow circular tubes. Solid
+wood shafts are treated as solid circular rods. With outer diameter `Do` and
+inner diameter `Di`, the section area and second moment of area are:
+
+```text
+hollow: A = pi * (Do^2 - Di^2) / 4
+        I = pi * (Do^4 - Di^4) / 64
+
+solid:  A = pi * Do^2 / 4
+        I = pi * Do^4 / 64
+```
+
+The web calculator converts the ATA test to SI-compatible units and reports:
+
+```text
+EI = P * L^3 / (48 * delta)
+effective_bending_modulus = EI / I
+```
+
+The effective bending modulus is a consistency check, not a replacement for
+the measured ATA spine. In particular, a carbon shaft is an anisotropic
+laminate: fiber direction, resin, wall construction, local reinforcement and
+manufacturing tolerances cannot be recovered from the two diameters alone.
+Because measured ATA deflection already includes material and section effects,
+the dynamic model uses the ATA-derived `EI`; applying `E * I` as a second
+stiffness correction would double-count the shaft geometry.
+
 The calculator also calculates finished arrow mass and grains per pound:
 
 ```text
@@ -49,8 +78,8 @@ deflection range from an explicit engineering model. It is not a directly
 measured property of the shaft.
 
 Inputs are actual full-draw weight `F`, pivot-point draw distance `D`, shaft
-length `L`, bare-arrow mass, point-system mass, ATA static spine, shaft diameter,
-material, and arrow-pass centerline offset `e`. For a shelfless bow, entering
+length `L`, bare-arrow mass, point-system mass, ATA static spine, outer diameter,
+inner diameter for hollow shafts, material, and arrow-pass centerline offset `e`. For a shelfless bow, entering
 grip width makes `e = grip width / 2`.
 
 The setup demand is calibrated to the same 100 gr point convention used by the
@@ -92,7 +121,8 @@ Material transient bounds remain:
 | Material | Default diameter | Clearance allowance | Dynamic factor `k` |
 | --- | ---: | ---: | ---: |
 | Carbon | 6 mm | 2 mm | 1.6-2.0 |
-| Bamboo / wood | 8 mm | 3 mm | 1.3-1.7 |
+| Laminated bamboo, hollow | 8 mm | 3 mm | 1.3-1.7 |
+| Wood, solid | 8 mm | 3 mm | 1.3-1.7 |
 
 The manufacturer-style recommendation is calculated as:
 
@@ -150,3 +180,8 @@ shaft length shorter than the entered pivot-point draw distance.
   https://goldtip.com/pages/spine-selector
 - Fish et al., Dynamic Characterization of Arrows through Stochastic Perturbation:
   https://arxiv.org/abs/1909.08186
+- Kooi and Sparenberg, Bow-arrow interaction in archery; tubular-shaft area,
+  second moment and Euler-Bernoulli dynamic model:
+  https://www.bio.vu.nl/thb/users/kooi/kooi97b.pdf
+- Easton arrow FAQ; static/dynamic spine and shaft diameter/wall construction:
+  https://eastonarchery.com/faqs/
