@@ -5,6 +5,16 @@
 The calculator uses the ATA/ASTM static-spine test conditions: a 1.94 lb
 (880 g) center load over a 28 in support span. Static deflection is expressed
 in inches. A 0.500 in deflection is therefore shown as ATA spine `500`.
+The web interface converts this displacement to millimeters so static and
+dynamic displacement can be compared without switching length units:
+
+```text
+static_test_displacement_mm = ATA_spine * 0.0254
+ATA_spine = static_test_displacement_mm / 0.0254
+```
+
+For example, ATA `700` means `17.78 mm` of deflection under the standardized
+static test. It does not mean the arrow bends 17.78 mm during a shot.
 
 For a simply supported shaft with a center load, the displayed flexural
 rigidity is calculated as:
@@ -103,7 +113,8 @@ clearance_static_max = C_max / (25.4 * k_min * R)
 ```
 
 The displayed final recommendation is the overlap between the equipment-match
-range and the handle-clearance range. A center-shot bow omits only this
+range and the bow-handle avoidance range. In the Chinese interface this is
+called "避开弓把所需侧弯" rather than "clearance deflection". A center-shot bow omits only this
 geometric clearance constraint; it does not omit dynamic deflection.
 
 When static spine is fixed, the calculator algebraically solves the same model
