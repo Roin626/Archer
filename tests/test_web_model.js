@@ -50,17 +50,48 @@ assert.deepEqual(
   [16.2, 23.4]
 );
 
-const centerShot = ArcherModel.calculateHandleClearanceRanges({
+const centerShot = ArcherModel.analyzeDynamicSpine({
   bowType: "olympic_recurve",
   drawWeightLb: 30,
   drawLengthIn: 28,
   shaftLengthIn: 29,
+  bareArrowWeightGr: 170,
+  pointWeightGr: 100,
+  ataSpine: 700,
+  arrowMaterial: "carbon",
+  shaftDiameterMm: 6,
   arrowPassOffsetMm: 0
 });
 
-assert.equal(centerShot.noHandleClearanceRequired, true);
-assert.equal(centerShot.materials.carbon.dynamicDeflectionMinMm, 0);
-assert.equal(centerShot.materials.carbon.ataSpineMin, null);
+assert.equal(centerShot.recommendation.hasClearanceConstraint, false);
+assert.ok(centerShot.current.dynamicDeflectionMinMm > 10);
+assert.ok(centerShot.current.dynamicDeflectionMaxMm > centerShot.current.dynamicDeflectionMinMm);
+assert.equal(Math.round(centerShot.recommendation.finalLowerIn * 1000), 537);
+assert.equal(Math.round(centerShot.recommendation.finalUpperIn * 1000), 727);
+assert.equal(centerShot.overallMatch, true);
+
+const traditionalDynamic = ArcherModel.analyzeDynamicSpine({
+  bowType: "shelfless_traditional",
+  drawWeightLb: 30,
+  drawLengthIn: 28,
+  shaftLengthIn: 29,
+  bareArrowWeightGr: 190,
+  pointWeightGr: 100,
+  ataSpine: 700,
+  arrowMaterial: "bamboo_wood",
+  shaftDiameterMm: 8,
+  gripWidthMm: 50
+});
+
+assert.equal(traditionalDynamic.arrowPassOffsetMm, 25);
+assert.deepEqual(
+  [traditionalDynamic.recommendation.requiredDynamicMinMm, traditionalDynamic.recommendation.requiredDynamicMaxMm],
+  [29, 32]
+);
+assert.equal(Math.round(traditionalDynamic.recommendation.finalLowerIn * 1000), 639);
+assert.equal(Math.round(traditionalDynamic.recommendation.finalUpperIn * 1000), 867);
+assert.ok(traditionalDynamic.adjustments.targetPointWeightGr > 100);
+assert.equal(traditionalDynamic.adjustments.pointClearancePass, true);
 
 const adjustment = ArcherModel.recommendPointWeightAdjustment({
   drawWeightLb: 30,
@@ -75,11 +106,16 @@ assert.equal(adjustment.targetPointWeightGr, 125);
 assert.equal(adjustment.targetAtaSpine, 732);
 
 assert.throws(function () {
-  ArcherModel.estimateBareShaftSpine({
+  ArcherModel.analyzeDynamicSpine({
     bowType: "shelfless_traditional",
     drawWeightLb: 30,
     drawLengthIn: 28,
-    shaftLengthIn: 29
+    shaftLengthIn: 29,
+    bareArrowWeightGr: 190,
+    pointWeightGr: 100,
+    ataSpine: 700,
+    arrowMaterial: "bamboo_wood",
+    shaftDiameterMm: 8
   });
 }, /测量弓把宽度/);
 
