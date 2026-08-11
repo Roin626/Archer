@@ -42,7 +42,11 @@
       initialSpineSummary: document.getElementById("initialSpineSummary"),
       carbonClearanceSummary: document.getElementById("carbonClearanceSummary"),
       naturalClearanceSummary: document.getElementById("naturalClearanceSummary"),
-      pointTuneSummary: document.getElementById("pointTuneSummary")
+      pointTuneSummary: document.getElementById("pointTuneSummary"),
+      gramsInput: document.getElementById("gramsInput"),
+      poundsInput: document.getElementById("poundsInput"),
+      inchesInput: document.getElementById("inchesInput"),
+      millimetersInput: document.getElementById("millimetersInput")
     };
 
     bindEvents();
@@ -50,6 +54,8 @@
     writeForm(session);
     render();
     renderTwoStageTuning();
+    updatePoundsFromGrams();
+    updateMillimetersFromInches();
   }
 
   function bindEvents() {
@@ -86,6 +92,45 @@
     });
 
     elements.tuningButton.addEventListener("click", renderTwoStageTuning);
+    elements.gramsInput.addEventListener("input", updatePoundsFromGrams);
+    elements.poundsInput.addEventListener("input", updateGramsFromPounds);
+    elements.inchesInput.addEventListener("input", updateMillimetersFromInches);
+    elements.millimetersInput.addEventListener("input", updateInchesFromMillimeters);
+  }
+
+  function updatePoundsFromGrams() {
+    syncConversion(elements.gramsInput, elements.poundsInput, window.ArcherModel.gramsToPounds);
+  }
+
+  function updateGramsFromPounds() {
+    syncConversion(elements.poundsInput, elements.gramsInput, window.ArcherModel.poundsToGrams);
+  }
+
+  function updateMillimetersFromInches() {
+    syncConversion(elements.inchesInput, elements.millimetersInput, window.ArcherModel.inchesToMillimeters);
+  }
+
+  function updateInchesFromMillimeters() {
+    syncConversion(elements.millimetersInput, elements.inchesInput, window.ArcherModel.millimetersToInches);
+  }
+
+  function syncConversion(source, target, convert) {
+    if (source.value.trim() === "") {
+      source.setCustomValidity("");
+      target.value = "";
+      return;
+    }
+    try {
+      target.value = formatConversionValue(convert(source.value));
+      source.setCustomValidity("");
+    } catch (error) {
+      target.value = "";
+      source.setCustomValidity(error.message);
+    }
+  }
+
+  function formatConversionValue(value) {
+    return String(Number(value.toFixed(6)));
   }
 
   function readForm() {
