@@ -465,17 +465,20 @@
     var empiricalUpperIn = centerDeflectionIn * (1 + setup.baseline.bandPercent / 100);
     var hasClearanceConstraint = setup.arrowPassOffsetMm > 0;
     var requiredDynamicMinMm = null;
-    var requiredDynamicMaxMm = null;
 
     if (hasClearanceConstraint) {
       requiredDynamicMinMm = setup.arrowPassOffsetMm + setup.shaftDiameterMm / 2;
-      requiredDynamicMaxMm = requiredDynamicMinMm + setup.material.extraClearanceMm;
     }
 
     var recommendedDynamicMinMm = empiricalLowerIn * MM_PER_INCH
       * response.responseScale * setup.material.dynamicFactorMin;
     var recommendedDynamicMaxMm = empiricalUpperIn * MM_PER_INCH
       * response.responseScale * setup.material.dynamicFactorMax;
+    var calibrationTargetMm = Math.max(
+      recommendedDynamicMinMm,
+      requiredDynamicMinMm == null ? 0 : requiredDynamicMinMm
+    );
+    var calibrationConflict = calibrationTargetMm > recommendedDynamicMaxMm;
     var lowerAta = Math.round(empiricalLowerIn * 1000);
     var upperAta = Math.round(empiricalUpperIn * 1000);
     var productAtaCandidates = COMMON_ATA_DEFLECTIONS.filter(function (value) {
@@ -494,42 +497,72 @@
       empiricalUpperIn: empiricalUpperIn,
       hasClearanceConstraint: hasClearanceConstraint,
       requiredDynamicMinMm: requiredDynamicMinMm,
-      requiredDynamicMaxMm: requiredDynamicMaxMm,
       finalLowerIn: empiricalLowerIn,
       finalUpperIn: empiricalUpperIn,
       finalCenterIn: centerDeflectionIn,
       productAtaCandidates: productAtaCandidates,
       recommendedDynamicMinMm: recommendedDynamicMinMm,
       recommendedDynamicMaxMm: recommendedDynamicMaxMm,
+      calibrationTargetMm: calibrationTargetMm,
+      calibrationConflict: calibrationConflict,
+      screeningPointWeightGr: 100,
       woodSpinePoundsMin: setup.materialKey !== "wood" ? null : 26 / empiricalUpperIn,
       woodSpinePoundsMax: setup.materialKey !== "wood" ? null : 26 / empiricalLowerIn,
-      conflict: false
+      conflict: calibrationConflict
     };
   }
 
   function assessClearance(dynamicMinMm, dynamicMaxMm, recommendation) {
     if (!recommendation.hasClearanceConstraint) return "not-applicable";
-    if (dynamicMinMm >= recommendation.requiredDynamicMinMm
-      && dynamicMaxMm <= recommendation.requiredDynamicMaxMm) return "within";
     if (dynamicMaxMm < recommendation.requiredDynamicMinMm) return "insufficient";
-    if (dynamicMinMm > recommendation.requiredDynamicMaxMm) return "excessive";
+    if (dynamicMinMm >= recommendation.requiredDynamicMinMm) return "satisfied";
+    return "uncertain";
+  }
+
+  function assessDynamicRecommendation(dynamicMinMm, dynamicMaxMm, recommendation) {
+    if (dynamicMaxMm < recommendation.recommendedDynamicMinMm) return "too-stiff";
+    if (dynamicMinMm > recommendation.recommendedDynamicMaxMm) return "too-soft";
+    if (dynamicMinMm >= recommendation.recommendedDynamicMinMm
+      && dynamicMaxMm <= recommendation.recommendedDynamicMaxMm) return "within";
     return "overlap";
   }
 
   function calculateFixedShaftAdjustments(setup, response, recommendation) {
-    var requiredEffectiveDrawWeightLb = GENERIC_BASE_DRAW_WEIGHT_LB * Math.pow(
-      setup.baseline.deflectionIn * Math.pow(setup.shaftLengthIn / GENERIC_BASE_SHAFT_LENGTH_IN, 3)
-        / setup.staticDeflectionIn,
-      1 / GENERIC_DRAW_WEIGHT_EXPONENT
-    );
-    var requiredSetupDemandLb = requiredEffectiveDrawWeightLb / response.powerStrokeFactor;
-    var targetPointWeightGr = 100 + (
-      requiredSetupDemandLb - setup.drawWeightLb - response.offsetAdjustmentLb
-    ) / EFFECTIVE_DRAW_PER_ARROW_WEIGHT_STEP_LB * ARROW_WEIGHT_STEP_GR;
-    var validPointWeight = targetPointWeightGr >= 0;
-    var targetShaftLengthIn = GENERIC_BASE_SHAFT_LENGTH_IN * Math.pow(
-      setup.staticDeflectionIn / setup.baseline.deflectionIn
-        * Math.pow(response.effectiveDrawWeightLb / GENERIC_BASE_DRAW_WEIGHT_LB, GENERIC_DRAW_WEIGHT_EXPONENT),
+    var targetDynamicMm = recommendation.calibrationConflict
+      ? null
+      : recommendation.calibrationTargetMm;
+
+    function responseAtPoint(pointWeightGr) {
+      return calculateDynamicResponse(setup, {
+        staticDeflectionIn: setup.staticDeflectionIn,
+        shaftLengthIn: setup.shaftLengthIn,
+        pointWeightGr: pointWeightGr
+      });
+    }
+
+    var targetPointWeightGr = null;
+    var validPointWeight = false;
+    if (targetDynamicMm != null) {
+      var lowerPointGr = 0;
+      var upperPointGr = 1000;
+      var lowerDynamicMm = responseAtPoint(lowerPointGr).dynamicDeflectionMinMm;
+      var upperDynamicMm = responseAtPoint(upperPointGr).dynamicDeflectionMinMm;
+      validPointWeight = targetDynamicMm >= lowerDynamicMm && targetDynamicMm <= upperDynamicMm;
+      if (validPointWeight) {
+        for (var pointIteration = 0; pointIteration < 60; pointIteration += 1) {
+          var middlePointGr = (lowerPointGr + upperPointGr) / 2;
+          if (responseAtPoint(middlePointGr).dynamicDeflectionMinMm < targetDynamicMm) {
+            lowerPointGr = middlePointGr;
+          } else {
+            upperPointGr = middlePointGr;
+          }
+        }
+        targetPointWeightGr = (lowerPointGr + upperPointGr) / 2;
+      }
+    }
+
+    var targetShaftLengthIn = targetDynamicMm == null ? null : setup.shaftLengthIn * Math.pow(
+      targetDynamicMm / response.dynamicDeflectionMinMm,
       1 / 3
     );
     var pointResponse = validPointWeight ? calculateDynamicResponse(setup, {
@@ -537,7 +570,7 @@
       shaftLengthIn: setup.shaftLengthIn,
       pointWeightGr: targetPointWeightGr
     }) : null;
-    var lengthResponse = calculateDynamicResponse(setup, {
+    var lengthResponse = targetShaftLengthIn == null ? null : calculateDynamicResponse(setup, {
       staticDeflectionIn: setup.staticDeflectionIn,
       shaftLengthIn: targetShaftLengthIn,
       pointWeightGr: setup.pointWeightGr
@@ -547,12 +580,13 @@
       pointResponse.dynamicDeflectionMaxMm,
       recommendation
     );
-    var lengthClearanceStatus = assessClearance(
+    var lengthClearanceStatus = lengthResponse == null ? "unavailable" : assessClearance(
       lengthResponse.dynamicDeflectionMinMm,
       lengthResponse.dynamicDeflectionMaxMm,
       recommendation
     );
     return {
+      targetDynamicMm: targetDynamicMm,
       targetDynamicMinMm: recommendation.recommendedDynamicMinMm,
       targetDynamicMaxMm: recommendation.recommendedDynamicMaxMm,
       targetSource: "equipment-screening",
@@ -561,14 +595,14 @@
       pointWeightDeltaGr: validPointWeight ? targetPointWeightGr - setup.pointWeightGr : null,
       pointDynamicMinMm: pointResponse == null ? null : pointResponse.dynamicDeflectionMinMm,
       pointDynamicMaxMm: pointResponse == null ? null : pointResponse.dynamicDeflectionMaxMm,
-      pointClearancePass: pointClearanceStatus === "not-applicable" || pointClearanceStatus === "within" || pointClearanceStatus === "overlap",
+      pointClearancePass: pointClearanceStatus === "not-applicable" || pointClearanceStatus === "satisfied",
       pointClearanceStatus: pointClearanceStatus,
       targetShaftLengthIn: targetShaftLengthIn,
-      shaftLengthDeltaIn: targetShaftLengthIn - setup.shaftLengthIn,
-      lengthBelowDrawLength: targetShaftLengthIn < setup.drawLengthIn,
-      lengthDynamicMinMm: lengthResponse.dynamicDeflectionMinMm,
-      lengthDynamicMaxMm: lengthResponse.dynamicDeflectionMaxMm,
-      lengthClearancePass: lengthClearanceStatus === "not-applicable" || lengthClearanceStatus === "within" || lengthClearanceStatus === "overlap",
+      shaftLengthDeltaIn: targetShaftLengthIn == null ? null : targetShaftLengthIn - setup.shaftLengthIn,
+      lengthBelowDrawLength: targetShaftLengthIn == null ? false : targetShaftLengthIn < setup.drawLengthIn,
+      lengthDynamicMinMm: lengthResponse == null ? null : lengthResponse.dynamicDeflectionMinMm,
+      lengthDynamicMaxMm: lengthResponse == null ? null : lengthResponse.dynamicDeflectionMaxMm,
+      lengthClearancePass: lengthClearanceStatus === "not-applicable" || lengthClearanceStatus === "satisfied",
       lengthClearanceStatus: lengthClearanceStatus
     };
   }
@@ -580,7 +614,12 @@
       shaftLengthIn: setup.shaftLengthIn,
       pointWeightGr: setup.pointWeightGr
     });
-    var recommendation = calculateDynamicRecommendation(setup, response);
+    var screeningResponse = calculateDynamicResponse(setup, {
+      staticDeflectionIn: setup.staticDeflectionIn,
+      shaftLengthIn: setup.shaftLengthIn,
+      pointWeightGr: 100
+    });
+    var recommendation = calculateDynamicRecommendation(setup, screeningResponse);
     var adjustments = calculateFixedShaftAdjustments(setup, response, recommendation);
     var staticMatch = setup.staticDeflectionIn >= recommendation.finalLowerIn
       && setup.staticDeflectionIn <= recommendation.finalUpperIn;
@@ -589,7 +628,13 @@
       response.dynamicDeflectionMaxMm,
       recommendation
     );
-    var clearanceMatch = clearanceStatus === "not-applicable" || clearanceStatus === "within" || clearanceStatus === "overlap";
+    var dynamicMatchStatus = assessDynamicRecommendation(
+      response.dynamicDeflectionMinMm,
+      response.dynamicDeflectionMaxMm,
+      recommendation
+    );
+    var clearanceMatch = clearanceStatus === "not-applicable" || clearanceStatus === "satisfied";
+    var dynamicMatch = dynamicMatchStatus === "within" || dynamicMatchStatus === "overlap";
     return {
       bowType: setup.bowType,
       bowLabel: setup.profile.label,
@@ -613,9 +658,11 @@
       recommendation: recommendation,
       adjustments: adjustments,
       staticMatch: staticMatch,
+      dynamicMatch: dynamicMatch,
+      dynamicMatchStatus: dynamicMatchStatus,
       clearanceMatch: clearanceMatch,
       clearanceStatus: clearanceStatus,
-      overallMatch: staticMatch && clearanceMatch && !recommendation.conflict
+      overallMatch: staticMatch && dynamicMatch && clearanceMatch && !recommendation.conflict
     };
   }
 
