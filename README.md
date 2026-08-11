@@ -27,7 +27,7 @@ start_archer.bat
 ## MVP 功能
 
 - 按弓型、材料、拉重、拉距、箭杆长、箭重、静态 Spine 和中心线偏差计算当前动态挠度。
-- 分弓型给出静态 Spine 与动态响应推荐区间；无台传统弓额外叠加绕把净空约束。
+- 分弓型给出静态 Spine 与动态响应推荐区间；无台传统弓额外计算避开弓把所需的侧弯量。
 - 固定当前裸箭 Spine，分别反算箭头/成品箭重方案和箭杆长度方案。
 - 落点记录逻辑保留，但网页入口暂时隐藏。
 - 提供克与磅、英寸与毫米的双向即时换算。
@@ -48,7 +48,7 @@ start_archer.bat
 python scripts/spine_estimator.py from-weight --bow-type olympic_recurve --draw-weight 30 --shaft-length 30 --finished-arrow-weight 270 --arrow-pass-offset-mm 0
 ```
 
-网页的“动态挠度与器材匹配”明确区分拉距（箭尾喉口至弓把 pivot）与箭杆长（箭尾喉口至箭杆端部）。中心出箭器材仍计算释放侧向激励下的动态弯曲；无台传统弓再叠加弓把净空要求。详细公式和限制见 `docs/spine-model.md`。
+网页的“动态挠度与器材匹配”明确区分拉距（箭尾喉口至弓把 pivot）与箭杆长（箭尾喉口至箭杆端部）。中心出箭器材仍计算释放侧向激励下的动态弯曲；无台传统弓再计算避开弓把所需的侧弯量。静态结果显示 ATA 编号和对应的毫米测试位移，动态结果显示毫米。详细公式和限制见 `docs/spine-model.md`。
 
 ```powershell
 python scripts/spine_estimator.py from-spine --bow-type olympic_recurve --draw-weight 30 --shaft-length 30 --ata-spine 700 --arrow-pass-offset-mm 0
