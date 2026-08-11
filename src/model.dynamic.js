@@ -517,71 +517,45 @@
   }
 
   function calculateFixedShaftAdjustments(setup, response, recommendation) {
-    var targetDynamicCenterMm = recommendation.hasClearanceConstraint
-      ? (recommendation.requiredDynamicMinMm + recommendation.requiredDynamicMaxMm) / 2
-      : (recommendation.recommendedDynamicMinMm + recommendation.recommendedDynamicMaxMm) / 2;
-    var targetSource = recommendation.hasClearanceConstraint ? "handle-clearance" : "equipment-screening";
-
-    function responseAtPoint(pointWeightGr) {
-      return calculateDynamicResponse(setup, {
-        staticDeflectionIn: setup.staticDeflectionIn,
-        shaftLengthIn: setup.shaftLengthIn,
-        pointWeightGr: pointWeightGr
-      });
-    }
-
-    function responseCenter(dynamicResponse) {
-      return (dynamicResponse.dynamicDeflectionMinMm + dynamicResponse.dynamicDeflectionMaxMm) / 2;
-    }
-
-    var lowerPointGr = 0;
-    var upperPointGr = 1000;
-    var lowerPointCenter = responseCenter(responseAtPoint(lowerPointGr));
-    var upperPointCenter = responseCenter(responseAtPoint(upperPointGr));
-    var validPointWeight = targetDynamicCenterMm >= lowerPointCenter
-      && targetDynamicCenterMm <= upperPointCenter;
-    var targetPointWeightGr = null;
-    if (validPointWeight) {
-      for (var pointIteration = 0; pointIteration < 60; pointIteration += 1) {
-        var middlePointGr = (lowerPointGr + upperPointGr) / 2;
-        if (responseCenter(responseAtPoint(middlePointGr)) < targetDynamicCenterMm) {
-          lowerPointGr = middlePointGr;
-        } else {
-          upperPointGr = middlePointGr;
-        }
-      }
-      targetPointWeightGr = (lowerPointGr + upperPointGr) / 2;
-    }
-
-    var currentDynamicCenterMm = responseCenter(response);
-    var targetShaftLengthIn = setup.shaftLengthIn * Math.pow(
-      targetDynamicCenterMm / currentDynamicCenterMm,
+    var requiredEffectiveDrawWeightLb = GENERIC_BASE_DRAW_WEIGHT_LB * Math.pow(
+      setup.baseline.deflectionIn * Math.pow(setup.shaftLengthIn / GENERIC_BASE_SHAFT_LENGTH_IN, 3)
+        / setup.staticDeflectionIn,
+      1 / GENERIC_DRAW_WEIGHT_EXPONENT
+    );
+    var requiredSetupDemandLb = requiredEffectiveDrawWeightLb / response.powerStrokeFactor;
+    var targetPointWeightGr = 100 + (
+      requiredSetupDemandLb - setup.drawWeightLb - response.offsetAdjustmentLb
+    ) / EFFECTIVE_DRAW_PER_ARROW_WEIGHT_STEP_LB * ARROW_WEIGHT_STEP_GR;
+    var validPointWeight = targetPointWeightGr >= 0;
+    var targetShaftLengthIn = GENERIC_BASE_SHAFT_LENGTH_IN * Math.pow(
+      setup.staticDeflectionIn / setup.baseline.deflectionIn
+        * Math.pow(response.effectiveDrawWeightLb / GENERIC_BASE_DRAW_WEIGHT_LB, GENERIC_DRAW_WEIGHT_EXPONENT),
       1 / 3
     );
-    var validShaftLength = targetShaftLengthIn >= setup.drawLengthIn;
     var pointResponse = validPointWeight ? calculateDynamicResponse(setup, {
       staticDeflectionIn: setup.staticDeflectionIn,
       shaftLengthIn: setup.shaftLengthIn,
       pointWeightGr: targetPointWeightGr
     }) : null;
-    var lengthResponse = validShaftLength ? calculateDynamicResponse(setup, {
+    var lengthResponse = calculateDynamicResponse(setup, {
       staticDeflectionIn: setup.staticDeflectionIn,
       shaftLengthIn: targetShaftLengthIn,
       pointWeightGr: setup.pointWeightGr
-    }) : null;
+    });
     var pointClearanceStatus = pointResponse == null ? "unavailable" : assessClearance(
       pointResponse.dynamicDeflectionMinMm,
       pointResponse.dynamicDeflectionMaxMm,
       recommendation
     );
-    var lengthClearanceStatus = lengthResponse == null ? "unavailable" : assessClearance(
+    var lengthClearanceStatus = assessClearance(
       lengthResponse.dynamicDeflectionMinMm,
       lengthResponse.dynamicDeflectionMaxMm,
       recommendation
     );
     return {
-      targetDynamicCenterMm: targetDynamicCenterMm,
-      targetSource: targetSource,
+      targetDynamicMinMm: recommendation.recommendedDynamicMinMm,
+      targetDynamicMaxMm: recommendation.recommendedDynamicMaxMm,
+      targetSource: "equipment-screening",
       targetPointWeightGr: validPointWeight ? targetPointWeightGr : null,
       targetFinishedArrowWeightGr: validPointWeight ? setup.bareArrowWeightGr + targetPointWeightGr : null,
       pointWeightDeltaGr: validPointWeight ? targetPointWeightGr - setup.pointWeightGr : null,
@@ -589,10 +563,11 @@
       pointDynamicMaxMm: pointResponse == null ? null : pointResponse.dynamicDeflectionMaxMm,
       pointClearancePass: pointClearanceStatus === "not-applicable" || pointClearanceStatus === "within" || pointClearanceStatus === "overlap",
       pointClearanceStatus: pointClearanceStatus,
-      targetShaftLengthIn: validShaftLength ? targetShaftLengthIn : null,
-      shaftLengthDeltaIn: validShaftLength ? targetShaftLengthIn - setup.shaftLengthIn : null,
-      lengthDynamicMinMm: lengthResponse == null ? null : lengthResponse.dynamicDeflectionMinMm,
-      lengthDynamicMaxMm: lengthResponse == null ? null : lengthResponse.dynamicDeflectionMaxMm,
+      targetShaftLengthIn: targetShaftLengthIn,
+      shaftLengthDeltaIn: targetShaftLengthIn - setup.shaftLengthIn,
+      lengthBelowDrawLength: targetShaftLengthIn < setup.drawLengthIn,
+      lengthDynamicMinMm: lengthResponse.dynamicDeflectionMinMm,
+      lengthDynamicMaxMm: lengthResponse.dynamicDeflectionMaxMm,
       lengthClearancePass: lengthClearanceStatus === "not-applicable" || lengthClearanceStatus === "within" || lengthClearanceStatus === "overlap",
       lengthClearanceStatus: lengthClearanceStatus
     };
