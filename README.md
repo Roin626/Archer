@@ -1,6 +1,6 @@
 # Archer
 
-Archer 是一个模块化射箭调弓辅助项目。当前阶段先实现“实射落点记录”小程序，用来记录每组箭的落点、箭型、距离、器材配置和备注，为后续的箭飞行模型、调弓规则引擎和管理层调度提供数据入口。
+Archer 是一个模块化射箭器材匹配与调弓辅助项目。当前网页以动态挠度估算、静态 Spine 推荐和固定箭杆后的配重/箭长反算为主。
 
 ## 当前模块
 
@@ -20,18 +20,16 @@ Windows 下双击：
 start_archer.bat
 ```
 
-启动器会打开 `index.html`。网页里可以记录落点，并计算碳箭杆与竹木箭杆的绕把动态挠度和静态 Spine 候选；历史配件矩阵只保留 CLI 入口。
+启动器会打开 `index.html`。网页计算中心出箭及非中心出箭器材的动态响应、静态 Spine 候选和固定箭杆调整方案；落点记录界面暂时隐藏，历史配件矩阵只保留 CLI 入口。
 
 也可以直接用浏览器打开 `index.html`。当前版本不需要后端、不需要安装依赖，数据默认保存在浏览器 `localStorage`。
 
 ## MVP 功能
 
-- 新建实射 session：弓型、距离、靶纸、环境、目标。
-- 点击靶面记录落点。
-- 标记箭型：羽箭、裸杆、测试箭。
-- 自动计算环值和组散布。
-- 在网页内按拉重、拉距、箭杆长和出箭点中心线偏差，分别计算碳箭杆与竹木箭杆的绕把动态挠度和静态 Spine 候选区间。
-- 再按实射落点反馈调整箭头系统重量和相邻 Spine 试箭方向。
+- 按弓型、材料、拉重、拉距、箭杆长、箭重、静态 Spine 和中心线偏差计算当前动态挠度。
+- 分弓型给出静态 Spine 与动态响应推荐区间；无台传统弓额外叠加绕把净空约束。
+- 固定当前裸箭 Spine，分别反算箭头/成品箭重方案和箭杆长度方案。
+- 落点记录逻辑保留，但网页入口暂时隐藏。
 - 提供克与磅、英寸与毫米的双向即时换算。
 - 导出 JSON/CSV。
 - 本地保存最近 session。
@@ -50,7 +48,7 @@ start_archer.bat
 python scripts/spine_estimator.py from-weight --bow-type olympic_recurve --draw-weight 30 --shaft-length 30 --finished-arrow-weight 270 --arrow-pass-offset-mm 0
 ```
 
-网页的“两阶段选箭与落点调箭”使用不同的工作流：第一阶段明确区分拉距（箭尾喉口至弓把 pivot）与箭杆长（箭尾喉口至箭杆端部），先计算几何绕把净空，再按拉重、拉距和箭杆长换算碳箭杆及竹木箭杆的静态 Spine 候选；第二阶段按高/中/低与偏硬/中性/偏软的落点判断，输出下一次箭头系统重量和相邻 Spine 试箭方向。
+网页的“动态挠度与器材匹配”明确区分拉距（箭尾喉口至弓把 pivot）与箭杆长（箭尾喉口至箭杆端部）。中心出箭器材仍计算释放侧向激励下的动态弯曲；无台传统弓再叠加弓把净空要求。详细公式和限制见 `docs/spine-model.md`。
 
 ```powershell
 python scripts/spine_estimator.py from-spine --bow-type olympic_recurve --draw-weight 30 --shaft-length 30 --ata-spine 700 --arrow-pass-offset-mm 0
