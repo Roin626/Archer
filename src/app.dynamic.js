@@ -292,7 +292,7 @@
     var list = elements.currentDynamicSummary;
     addDefinitionRow(list, "器材", result.bowLabel + " / " + result.materialLabel);
     addDefinitionRow(list, "成品箭重 / GPP", formatNumber(result.finishedArrowWeightGr, 1) + " gr / " + formatNumber(result.gpp, 2));
-    addDefinitionRow(list, "当前静态挠度", formatNumber(result.staticDeflectionIn, 3) + " in（ATA " + result.ataSpine + "）");
+    addDefinitionRow(list, "当前静态 Spine", "ATA " + result.ataSpine + "（静态测试位移 " + formatNumber(window.ArcherModel.ataSpineToMillimeters(result.ataSpine), 2) + " mm）");
     addDefinitionRow(list, "预测动态挠度", formatRange(result.current.dynamicDeflectionMinMm, result.current.dynamicDeflectionMaxMm, 1, "mm"));
     addDefinitionRow(list, "释放侧向等效力", formatNumber(result.current.lateralForceLb, 3) + " lb");
     addDefinitionRow(list, "出箭点中心线", formatNumber(result.arrowPassOffsetMm, 1) + " mm（" + offsetSourceLabel(result.offsetSource) + "）");
@@ -304,16 +304,16 @@
     var recommendation = result.recommendation;
     addDefinitionRow(list, "器材匹配初筛", formatSpineRange(recommendation.empiricalLowerIn, recommendation.empiricalUpperIn));
     if (recommendation.hasClearanceConstraint) {
-      addDefinitionRow(list, "绕把所需动态位移", formatRange(recommendation.requiredDynamicMinMm, recommendation.requiredDynamicMaxMm, 1, "mm"));
-      addDefinitionRow(list, "净空对应静态范围", formatSpineRange(recommendation.clearanceLowerIn, recommendation.clearanceUpperIn));
+      addDefinitionRow(list, "避开弓把所需侧弯", formatRange(recommendation.requiredDynamicMinMm, recommendation.requiredDynamicMaxMm, 1, "mm"));
+      addDefinitionRow(list, "满足弓把避让的 Spine", formatSpineRange(recommendation.clearanceLowerIn, recommendation.clearanceUpperIn));
     } else {
-      addDefinitionRow(list, "绕把净空", "中心出箭；不施加弓把净空约束");
+      addDefinitionRow(list, "弓把避让", "中心出箭，无需额外避让弓把；仍计算动态弯曲");
     }
     if (recommendation.conflict) {
-      addDefinitionRow(list, "综合推荐", "器材匹配与绕把净空没有重叠，请先调整箭长、箭重或中心线偏差");
+      addDefinitionRow(list, "综合推荐", "器材匹配与弓把避让没有重叠，请先调整箭长、箭重或中心线偏差");
       return;
     }
-    addDefinitionRow(list, "综合推荐静态挠度", formatSpineRange(recommendation.finalLowerIn, recommendation.finalUpperIn));
+    addDefinitionRow(list, "综合推荐 Spine", formatSpineRange(recommendation.finalLowerIn, recommendation.finalUpperIn));
     addDefinitionRow(list, "推荐动态响应", formatRange(recommendation.recommendedDynamicMinMm, recommendation.recommendedDynamicMaxMm, 1, "mm"));
     if (recommendation.woodSpinePoundsMin != null) {
       addDefinitionRow(list, "传统木箭标磅近似", formatRange(recommendation.woodSpinePoundsMin, recommendation.woodSpinePoundsMax, 1, "lb"));
@@ -335,8 +335,8 @@
   }
 
   function formatSpineRange(lowerIn, upperIn) {
-    return formatNumber(lowerIn, 3) + "-" + formatNumber(upperIn, 3) + " in（ATA "
-      + Math.round(lowerIn * 1000) + "-" + Math.round(upperIn * 1000) + "）";
+    return "ATA " + Math.round(lowerIn * 1000) + "-" + Math.round(upperIn * 1000)
+      + "（静态测试位移 " + formatNumber(lowerIn * 25.4, 2) + "-" + formatNumber(upperIn * 25.4, 2) + " mm）";
   }
 
   function formatRange(lower, upper, digits, unit) {
@@ -355,9 +355,9 @@
 
   function currentMatchLabel(result) {
     if (!result.staticMatch) return "静态 Spine 不在综合推荐区间，需调整或试相邻 Spine";
-    if (result.clearanceStatus === "overlap") return "静态匹配；绕把范围部分重叠，需实射验证";
-    if (result.clearanceStatus === "insufficient") return "动态挠度不足以绕把";
-    if (result.clearanceStatus === "excessive") return "动态挠度超过绕把目标范围";
+    if (result.clearanceStatus === "overlap") return "静态匹配；弓把避让范围部分重叠，需实射验证";
+    if (result.clearanceStatus === "insufficient") return "侧弯不足以避开弓把";
+    if (result.clearanceStatus === "excessive") return "侧弯超过建议避让范围";
     return "在综合推荐区间内";
   }
 
@@ -370,7 +370,7 @@
       excessive: "挠度过量",
       unavailable: "不可计算"
     };
-    return "；绕把净空" + (labels[status] || "需复核");
+    return "；弓把避让" + (labels[status] || "需复核");
   }
 
   function signedNumber(value, digits) {
