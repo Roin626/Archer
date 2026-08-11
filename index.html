@@ -139,22 +139,22 @@
             <label>出箭点距中心线 mm<input id="tuningArrowPassOffset" type="number" min="0" step="0.5" placeholder="中心出箭填 0；无台弓需实测"></label>
             <label>裸箭重量 gr（不含箭头）<input id="tuningBareArrowWeight" type="number" min="1" step="1" value="170"></label>
             <label>箭头系统重量 gr<input id="tuningPointWeight" type="number" min="0" step="1" value="100"></label>
-            <label>裸箭 ATA 静态 Spine<input id="tuningAtaSpine" type="number" min="100" max="2000" step="1" value="700"></label>
+            <label>裸箭 ATA 静态挠度<input id="tuningAtaSpine" type="number" min="100" max="2000" step="1" value="700"></label>
           </form>
           <p class="form-hint">碳箭杆和拼竹箭杆按内外径计算空心圆管截面，木箭杆按实心圆杆计算。ATA 实测值用于确定整杆弯曲刚度；截面尺寸用于核对惯性矩和等效弯曲模量。箭杆长为箭尾喉口至箭杆端部。</p>
           <div class="toolbar"><button id="tuningButton" type="button">计算动态匹配</button></div>
           <p id="tuningError" class="form-error" role="alert"></p>
           <div class="dynamic-results">
             <div>
-              <h3>当前动态响应</h3>
+              <h3>当前动态挠度</h3>
               <dl id="currentDynamicSummary" class="summary tool-summary"></dl>
             </div>
             <div>
-              <h3>推荐匹配区间</h3>
+              <h3>推荐挠度区间</h3>
               <dl id="recommendedSpineSummary" class="summary tool-summary"></dl>
             </div>
             <div>
-              <h3>固定箭杆后的调整</h3>
+              <h3>固定箭杆后的挠度调整</h3>
               <dl id="fixedShaftSummary" class="summary tool-summary"></dl>
             </div>
           </div>
@@ -186,8 +186,8 @@
       </section>
     </main>
 
-    <script src="src/model.dynamic.js?v=5"></script>
+    <script src="src/model.dynamic.js?v=6"></script>
     <script src="src/storage.js"></script>
-    <script src="src/app.dynamic.js?v=5"></script>
+    <script src="src/app.dynamic.js?v=6"></script>
   </body>
 </html>
