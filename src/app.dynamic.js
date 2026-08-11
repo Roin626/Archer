@@ -296,7 +296,7 @@
     addDefinitionRow(list, "预测动态挠度", formatRange(result.current.dynamicDeflectionMinMm, result.current.dynamicDeflectionMaxMm, 1, "mm"));
     addDefinitionRow(list, "释放侧向等效力", formatNumber(result.current.lateralForceLb, 3) + " lb");
     addDefinitionRow(list, "出箭点中心线", formatNumber(result.arrowPassOffsetMm, 1) + " mm（" + offsetSourceLabel(result.offsetSource) + "）");
-    addDefinitionRow(list, "当前匹配", result.overallMatch ? "在综合推荐区间内" : "需要调整或相邻 Spine 试箭");
+    addDefinitionRow(list, "当前匹配", currentMatchLabel(result));
   }
 
   function renderDynamicRecommendation(result) {
@@ -328,10 +328,10 @@
       addDefinitionRow(list, "箭重方案", "无法用非负箭头重量达到推荐中心，请改用更硬箭杆或调整箭长");
     } else {
       addDefinitionRow(list, "箭重方案", "箭头系统 " + formatNumber(adjustment.targetPointWeightGr, 1) + " gr（" + signedNumber(adjustment.pointWeightDeltaGr, 1) + " gr），成品 " + formatNumber(adjustment.targetFinishedArrowWeightGr, 1) + " gr");
-      addDefinitionRow(list, "箭重后动态响应", formatRange(adjustment.pointDynamicMinMm, adjustment.pointDynamicMaxMm, 1, "mm") + clearanceSuffix(result, adjustment.pointClearancePass));
+      addDefinitionRow(list, "箭重后动态响应", formatRange(adjustment.pointDynamicMinMm, adjustment.pointDynamicMaxMm, 1, "mm") + clearanceSuffix(result, adjustment.pointClearanceStatus));
     }
     addDefinitionRow(list, "箭长方案", formatNumber(adjustment.targetShaftLengthIn, 2) + " in（" + signedNumber(adjustment.shaftLengthDeltaIn, 2) + " in）");
-    addDefinitionRow(list, "箭长后动态响应", formatRange(adjustment.lengthDynamicMinMm, adjustment.lengthDynamicMaxMm, 1, "mm") + clearanceSuffix(result, adjustment.lengthClearancePass));
+    addDefinitionRow(list, "箭长后动态响应", formatRange(adjustment.lengthDynamicMinMm, adjustment.lengthDynamicMaxMm, 1, "mm") + clearanceSuffix(result, adjustment.lengthClearanceStatus));
   }
 
   function formatSpineRange(lowerIn, upperIn) {
@@ -353,8 +353,24 @@
     return "实测输入";
   }
 
-  function clearanceSuffix(result, passes) {
-    return result.recommendation.hasClearanceConstraint ? "；绕把净空" + (passes ? "通过" : "不足") : "";
+  function currentMatchLabel(result) {
+    if (!result.staticMatch) return "静态 Spine 不在综合推荐区间，需调整或试相邻 Spine";
+    if (result.clearanceStatus === "overlap") return "静态匹配；绕把范围部分重叠，需实射验证";
+    if (result.clearanceStatus === "insufficient") return "动态挠度不足以绕把";
+    if (result.clearanceStatus === "excessive") return "动态挠度超过绕把目标范围";
+    return "在综合推荐区间内";
+  }
+
+  function clearanceSuffix(result, status) {
+    if (!result.recommendation.hasClearanceConstraint) return "";
+    var labels = {
+      within: "完全落入目标",
+      overlap: "部分重叠，需实射验证",
+      insufficient: "挠度不足",
+      excessive: "挠度过量",
+      unavailable: "不可计算"
+    };
+    return "；绕把净空" + (labels[status] || "需复核");
   }
 
   function signedNumber(value, digits) {
