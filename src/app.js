@@ -27,22 +27,21 @@
       jsonButton: document.getElementById("jsonButton"),
       csvButton: document.getElementById("csvButton"),
       tuningBowType: document.getElementById("tuningBowType"),
+      tuningArrowMaterial: document.getElementById("tuningArrowMaterial"),
       tuningDrawWeight: document.getElementById("tuningDrawWeight"),
       tuningDrawLength: document.getElementById("tuningDrawLength"),
       tuningShaftLength: document.getElementById("tuningShaftLength"),
+      tuningShaftDiameter: document.getElementById("tuningShaftDiameter"),
       tuningGripWidth: document.getElementById("tuningGripWidth"),
       tuningArrowPassOffset: document.getElementById("tuningArrowPassOffset"),
       tuningBareArrowWeight: document.getElementById("tuningBareArrowWeight"),
       tuningPointWeight: document.getElementById("tuningPointWeight"),
       tuningAtaSpine: document.getElementById("tuningAtaSpine"),
-      tuningVerticalFeedback: document.getElementById("tuningVerticalFeedback"),
-      tuningLateralFeedback: document.getElementById("tuningLateralFeedback"),
       tuningButton: document.getElementById("tuningButton"),
       tuningError: document.getElementById("tuningError"),
-      initialSpineSummary: document.getElementById("initialSpineSummary"),
-      carbonClearanceSummary: document.getElementById("carbonClearanceSummary"),
-      naturalClearanceSummary: document.getElementById("naturalClearanceSummary"),
-      pointTuneSummary: document.getElementById("pointTuneSummary"),
+      currentDynamicSummary: document.getElementById("currentDynamicSummary"),
+      recommendedSpineSummary: document.getElementById("recommendedSpineSummary"),
+      fixedShaftSummary: document.getElementById("fixedShaftSummary"),
       gramsInput: document.getElementById("gramsInput"),
       poundsInput: document.getElementById("poundsInput"),
       inchesInput: document.getElementById("inchesInput"),
@@ -53,7 +52,7 @@
     session = window.ArcherStorage.loadSession() || window.ArcherModel.createSession(readForm());
     writeForm(session);
     render();
-    renderTwoStageTuning();
+    renderDynamicSpineAnalysis();
     updatePoundsFromGrams();
     updateMillimetersFromInches();
   }
@@ -91,7 +90,8 @@
       download("archer-session-" + session.id + ".csv", window.ArcherModel.toCsv(session), "text/csv");
     });
 
-    elements.tuningButton.addEventListener("click", renderTwoStageTuning);
+    elements.tuningButton.addEventListener("click", renderDynamicSpineAnalysis);
+    elements.tuningArrowMaterial.addEventListener("change", updateMaterialDefaults);
     elements.gramsInput.addEventListener("input", updatePoundsFromGrams);
     elements.poundsInput.addEventListener("input", updateGramsFromPounds);
     elements.inchesInput.addEventListener("input", updateMillimetersFromInches);
@@ -112,6 +112,10 @@
 
   function updateInchesFromMillimeters() {
     syncConversion(elements.millimetersInput, elements.inchesInput, window.ArcherModel.millimetersToInches);
+  }
+
+  function updateMaterialDefaults() {
+    elements.tuningShaftDiameter.value = elements.tuningArrowMaterial.value === "bamboo_wood" ? "8" : "6";
   }
 
   function syncConversion(source, target, convert) {
@@ -254,59 +258,107 @@
     });
   }
 
-  function renderTwoStageTuning() {
+  function renderDynamicSpineAnalysis() {
     try {
-      var initial = window.ArcherModel.calculateHandleClearanceRanges({
+      var result = window.ArcherModel.analyzeDynamicSpine({
         bowType: elements.tuningBowType.value,
+        arrowMaterial: elements.tuningArrowMaterial.value,
         drawWeightLb: elements.tuningDrawWeight.value,
         drawLengthIn: elements.tuningDrawLength.value,
         shaftLengthIn: elements.tuningShaftLength.value,
+        shaftDiameterMm: elements.tuningShaftDiameter.value,
         gripWidthMm: elements.tuningGripWidth.value,
-        arrowPassOffsetMm: elements.tuningArrowPassOffset.value
-      });
-      var adjustment = window.ArcherModel.recommendPointWeightAdjustment({
-        drawWeightLb: elements.tuningDrawWeight.value,
+        arrowPassOffsetMm: elements.tuningArrowPassOffset.value,
         bareArrowWeightGr: elements.tuningBareArrowWeight.value,
         pointWeightGr: elements.tuningPointWeight.value,
-        ataSpine: elements.tuningAtaSpine.value,
-        verticalFeedback: elements.tuningVerticalFeedback.value,
-        lateralFeedback: elements.tuningLateralFeedback.value
+        ataSpine: elements.tuningAtaSpine.value
       });
       elements.tuningError.textContent = "";
-      elements.initialSpineSummary.innerHTML = "";
-      elements.carbonClearanceSummary.innerHTML = "";
-      elements.naturalClearanceSummary.innerHTML = "";
-      elements.pointTuneSummary.innerHTML = "";
-      addDefinitionRow(elements.initialSpineSummary, "箭杆长 - 拉距", initial.shaftClearanceIn + " in");
-      addDefinitionRow(elements.initialSpineSummary, "中心线偏差", initial.arrowPassOffsetMm + " mm（" + (initial.offsetSource === "grip-width-half" ? "弓把宽度的一半" : "手动/弓型默认") + "）");
-      addDefinitionRow(elements.initialSpineSummary, "理论横向激励", initial.lateralForceLb + " lb");
-      renderMaterialClearance(elements.carbonClearanceSummary, initial.materials.carbon, initial.noHandleClearanceRequired);
-      renderMaterialClearance(elements.naturalClearanceSummary, initial.materials.bamboo_wood, initial.noHandleClearanceRequired);
-      addDefinitionRow(elements.pointTuneSummary, "下一次箭头系统重量", adjustment.targetPointWeightGr + " gr（" + signedNumber(adjustment.pointDeltaGr) + " gr）");
-      addDefinitionRow(elements.pointTuneSummary, "成品箭重 / GPP", adjustment.targetFinishedArrowWeightGr + " gr / " + adjustment.targetGpp);
-      addDefinitionRow(elements.pointTuneSummary, "相邻 Spine 试箭", adjustment.needsSpineChange ? adjustment.targetAtaSpine + "（" + (adjustment.ataSpineDelta < 0 ? "更硬" : "更软") + " " + Math.abs(adjustment.ataSpineDelta) + "）" : "保持当前 " + elements.tuningAtaSpine.value);
+      elements.currentDynamicSummary.innerHTML = "";
+      elements.recommendedSpineSummary.innerHTML = "";
+      elements.fixedShaftSummary.innerHTML = "";
+      renderCurrentDynamic(result);
+      renderDynamicRecommendation(result);
+      renderFixedShaftAdjustments(result);
     } catch (error) {
       elements.tuningError.textContent = error.message;
+      elements.currentDynamicSummary.innerHTML = "";
+      elements.recommendedSpineSummary.innerHTML = "";
+      elements.fixedShaftSummary.innerHTML = "";
     }
   }
 
-  function renderMaterialClearance(list, result, noHandleClearanceRequired) {
-    if (noHandleClearanceRequired) {
-      addDefinitionRow(list, "绕把动态挠度", "0 mm（中心射出，无侧向绕把需求）");
-      addDefinitionRow(list, "静态 Spine", "不由绕把净空约束");
+  function renderCurrentDynamic(result) {
+    var list = elements.currentDynamicSummary;
+    addDefinitionRow(list, "器材", result.bowLabel + " / " + result.materialLabel);
+    addDefinitionRow(list, "成品箭重 / GPP", formatNumber(result.finishedArrowWeightGr, 1) + " gr / " + formatNumber(result.gpp, 2));
+    addDefinitionRow(list, "当前静态挠度", formatNumber(result.staticDeflectionIn, 3) + " in（ATA " + result.ataSpine + "）");
+    addDefinitionRow(list, "预测动态挠度", formatRange(result.current.dynamicDeflectionMinMm, result.current.dynamicDeflectionMaxMm, 1, "mm"));
+    addDefinitionRow(list, "释放侧向等效力", formatNumber(result.current.lateralForceLb, 3) + " lb");
+    addDefinitionRow(list, "出箭点中心线", formatNumber(result.arrowPassOffsetMm, 1) + " mm（" + offsetSourceLabel(result.offsetSource) + "）");
+    addDefinitionRow(list, "当前匹配", result.overallMatch ? "在综合推荐区间内" : "需要调整或相邻 Spine 试箭");
+  }
+
+  function renderDynamicRecommendation(result) {
+    var list = elements.recommendedSpineSummary;
+    var recommendation = result.recommendation;
+    addDefinitionRow(list, "器材匹配初筛", formatSpineRange(recommendation.empiricalLowerIn, recommendation.empiricalUpperIn));
+    if (recommendation.hasClearanceConstraint) {
+      addDefinitionRow(list, "绕把所需动态位移", formatRange(recommendation.requiredDynamicMinMm, recommendation.requiredDynamicMaxMm, 1, "mm"));
+      addDefinitionRow(list, "净空对应静态范围", formatSpineRange(recommendation.clearanceLowerIn, recommendation.clearanceUpperIn));
+    } else {
+      addDefinitionRow(list, "绕把净空", "中心出箭；不施加弓把净空约束");
+    }
+    if (recommendation.conflict) {
+      addDefinitionRow(list, "综合推荐", "器材匹配与绕把净空没有重叠，请先调整箭长、箭重或中心线偏差");
       return;
     }
-    addDefinitionRow(list, "理论动态挠度", result.dynamicDeflectionMinMm + "-" + result.dynamicDeflectionMaxMm + " mm");
-    addDefinitionRow(list, "所需静态挠度", result.staticDeflectionMinIn + "-" + result.staticDeflectionMaxIn + " in");
-    addDefinitionRow(list, "ATA Spine 区间", result.ataSpineMin + "-" + result.ataSpineMax);
-    if (result.woodSpinePoundsMin != null) {
-      addDefinitionRow(list, "传统木箭 Spine", result.woodSpinePoundsMin + "-" + result.woodSpinePoundsMax + " lb（26/挠度近似）");
+    addDefinitionRow(list, "综合推荐静态挠度", formatSpineRange(recommendation.finalLowerIn, recommendation.finalUpperIn));
+    addDefinitionRow(list, "推荐动态响应", formatRange(recommendation.recommendedDynamicMinMm, recommendation.recommendedDynamicMaxMm, 1, "mm"));
+    if (recommendation.woodSpinePoundsMin != null) {
+      addDefinitionRow(list, "传统木箭标磅近似", formatRange(recommendation.woodSpinePoundsMin, recommendation.woodSpinePoundsMax, 1, "lb"));
     }
-    addDefinitionRow(list, "模型假设", result.assumedDiameterMm + " mm 杆径；动态系数 " + result.dynamicFactorMin + "-" + result.dynamicFactorMax);
   }
 
-  function signedNumber(value) {
-    return (value > 0 ? "+" : "") + value;
+  function renderFixedShaftAdjustments(result) {
+    var list = elements.fixedShaftSummary;
+    var adjustment = result.adjustments;
+    addDefinitionRow(list, "说明", result.staticMatch ? "当前静态 Spine 已在推荐带内；以下数值用于对准推荐中心" : "以下为固定当前静态 Spine 的中心匹配方案");
+    if (adjustment.targetPointWeightGr == null) {
+      addDefinitionRow(list, "箭重方案", "无法用非负箭头重量达到推荐中心，请改用更硬箭杆或调整箭长");
+    } else {
+      addDefinitionRow(list, "箭重方案", "箭头系统 " + formatNumber(adjustment.targetPointWeightGr, 1) + " gr（" + signedNumber(adjustment.pointWeightDeltaGr, 1) + " gr），成品 " + formatNumber(adjustment.targetFinishedArrowWeightGr, 1) + " gr");
+      addDefinitionRow(list, "箭重后动态响应", formatRange(adjustment.pointDynamicMinMm, adjustment.pointDynamicMaxMm, 1, "mm") + clearanceSuffix(result, adjustment.pointClearancePass));
+    }
+    addDefinitionRow(list, "箭长方案", formatNumber(adjustment.targetShaftLengthIn, 2) + " in（" + signedNumber(adjustment.shaftLengthDeltaIn, 2) + " in）");
+    addDefinitionRow(list, "箭长后动态响应", formatRange(adjustment.lengthDynamicMinMm, adjustment.lengthDynamicMaxMm, 1, "mm") + clearanceSuffix(result, adjustment.lengthClearancePass));
+  }
+
+  function formatSpineRange(lowerIn, upperIn) {
+    return formatNumber(lowerIn, 3) + "-" + formatNumber(upperIn, 3) + " in（ATA "
+      + Math.round(lowerIn * 1000) + "-" + Math.round(upperIn * 1000) + "）";
+  }
+
+  function formatRange(lower, upper, digits, unit) {
+    return formatNumber(lower, digits) + "-" + formatNumber(upper, digits) + " " + unit;
+  }
+
+  function formatNumber(value, digits) {
+    return String(Number(value.toFixed(digits)));
+  }
+
+  function offsetSourceLabel(source) {
+    if (source === "grip-width-half") return "弓把宽度的一半";
+    if (source === "bow-default") return "弓型默认";
+    return "实测输入";
+  }
+
+  function clearanceSuffix(result, passes) {
+    return result.recommendation.hasClearanceConstraint ? "；绕把净空" + (passes ? "通过" : "不足") : "";
+  }
+
+  function signedNumber(value, digits) {
+    return (value > 0 ? "+" : "") + formatNumber(value, digits == null ? 0 : digits);
   }
 
   function addDefinitionRow(list, label, value) {
