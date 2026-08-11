@@ -7,6 +7,8 @@ assert.equal(ArcherModel.gramsToPounds(453.59237), 1);
 assert.equal(ArcherModel.poundsToGrams(1), 453.59237);
 assert.equal(ArcherModel.inchesToMillimeters(1), 25.4);
 assert.equal(ArcherModel.millimetersToInches(25.4), 1);
+assert.ok(Math.abs(ArcherModel.ataSpineToMillimeters(700) - 17.78) < 1e-9);
+assert.equal(Math.round(ArcherModel.millimetersToAtaSpine(17.78)), 700);
 assert.throws(function () {
   ArcherModel.gramsToPounds("not-a-number");
 }, /有效数字/);
