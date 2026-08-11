@@ -147,7 +147,7 @@ const traditionalDynamic = ArcherModel.analyzeDynamicSpine({
 assert.equal(traditionalDynamic.arrowPassOffsetMm, 25);
 assert.deepEqual(
   [traditionalDynamic.recommendation.requiredDynamicMinMm, traditionalDynamic.recommendation.requiredDynamicMaxMm],
-  [29, 32]
+  [29, undefined]
 );
 assert.equal(Math.round(traditionalDynamic.recommendation.finalLowerIn * 1000), 578);
 assert.equal(Math.round(traditionalDynamic.recommendation.finalUpperIn * 1000), 867);
@@ -155,10 +155,14 @@ assert.equal(traditionalDynamic.recommendation.clearanceLowerIn, undefined);
 assert.deepEqual(traditionalDynamic.recommendation.productAtaCandidates, [600, 650, 700, 750, 800]);
 assert.ok(traditionalDynamic.adjustments.targetPointWeightGr > 100);
 assert.equal(traditionalDynamic.adjustments.pointClearancePass, true);
-assert.equal(traditionalDynamic.clearanceStatus, "overlap");
-assert.equal(traditionalDynamic.adjustments.pointClearanceStatus, "overlap");
+assert.equal(traditionalDynamic.clearanceStatus, "uncertain");
+assert.equal(traditionalDynamic.clearanceMatch, false);
+assert.equal(traditionalDynamic.adjustments.pointClearanceStatus, "satisfied");
 assert.equal(traditionalDynamic.section.sectionType, "hollow");
 assert.equal(traditionalDynamic.adjustments.targetSource, "equipment-screening");
+assert.equal(traditionalDynamic.adjustments.targetDynamicMm, 29);
+assert.equal(traditionalDynamic.recommendation.calibrationTargetMm, 29);
+assert.equal(traditionalDynamic.recommendation.calibrationConflict, false);
 assert.equal(
   traditionalDynamic.adjustments.targetDynamicMinMm,
   traditionalDynamic.recommendation.recommendedDynamicMinMm
@@ -175,6 +179,48 @@ assert.ok(
   traditionalDynamic.adjustments.lengthDynamicMaxMm >= traditionalDynamic.adjustments.targetDynamicMinMm
     && traditionalDynamic.adjustments.lengthDynamicMinMm <= traditionalDynamic.adjustments.targetDynamicMaxMm
 );
+assert.ok(Math.abs(traditionalDynamic.adjustments.pointDynamicMinMm - 29) < 1e-6);
+assert.ok(Math.abs(traditionalDynamic.adjustments.lengthDynamicMinMm - 29) < 1e-6);
+
+const heavierPointSameScreening = ArcherModel.analyzeDynamicSpine({
+  bowType: "shelfless_traditional",
+  drawWeightLb: 30,
+  drawLengthIn: 28,
+  shaftLengthIn: 29,
+  bareArrowWeightGr: 190,
+  pointWeightGr: 150,
+  ataSpine: 700,
+  arrowMaterial: "bamboo",
+  shaftDiameterMm: 8,
+  shaftInnerDiameterMm: 4,
+  gripWidthMm: 50
+});
+assert.equal(
+  heavierPointSameScreening.recommendation.empiricalLowerIn,
+  traditionalDynamic.recommendation.empiricalLowerIn
+);
+assert.equal(
+  heavierPointSameScreening.recommendation.recommendedDynamicMinMm,
+  traditionalDynamic.recommendation.recommendedDynamicMinMm
+);
+
+const conflictingClearance = ArcherModel.analyzeDynamicSpine({
+  bowType: "shelfless_traditional",
+  drawWeightLb: 30,
+  drawLengthIn: 28,
+  shaftLengthIn: 29,
+  bareArrowWeightGr: 190,
+  pointWeightGr: 100,
+  ataSpine: 700,
+  arrowMaterial: "bamboo",
+  shaftDiameterMm: 8,
+  shaftInnerDiameterMm: 4,
+  gripWidthMm: 120
+});
+assert.equal(conflictingClearance.recommendation.calibrationConflict, true);
+assert.equal(conflictingClearance.adjustments.targetDynamicMm, null);
+assert.equal(conflictingClearance.adjustments.targetPointWeightGr, null);
+assert.equal(conflictingClearance.adjustments.targetShaftLengthIn, null);
 
 const adjustment = ArcherModel.recommendPointWeightAdjustment({
   drawWeightLb: 30,
