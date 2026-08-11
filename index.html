@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Archer 落点记录</title>
+    <title>Archer 动态挠度与器材匹配</title>
     <link rel="stylesheet" href="src/styles.css">
   </head>
   <body>
     <main class="app-shell">
-      <section class="panel setup-panel">
+      <section class="panel setup-panel" hidden aria-hidden="true">
         <div class="panel-heading">
           <h1>实射落点记录</h1>
           <p>记录每支箭的落点、箭型和实验条件，为后续调弓分析提供数据。</p>
@@ -71,7 +71,7 @@
         </div>
       </section>
 
-      <section class="workspace">
+      <section class="workspace" hidden aria-hidden="true">
         <div class="panel target-panel">
           <div class="shot-controls">
             <label>
@@ -123,36 +123,39 @@
       </section>
 
       <section class="tool-grid">
-        <section class="panel tool-panel two-stage-panel">
+        <section class="panel tool-panel two-stage-panel dynamic-spine-panel">
           <div class="panel-heading compact-heading">
-            <h2>两阶段选箭与落点调箭</h2>
+            <h1>动态挠度与器材匹配</h1>
           </div>
           <form id="tuningForm" class="setup-grid tool-form">
-            <label>弓型<select id="tuningBowType"><option value="olympic_recurve">奥反</option><option value="barebow">光弓</option><option value="compound">复合</option><option value="american_hunting">美猎</option><option value="shelfless_traditional">无台传统弓</option></select></label>
+            <label>弓型<select id="tuningBowType"><option value="olympic_recurve">竞技反曲</option><option value="barebow">光弓</option><option value="compound">复合弓</option><option value="american_hunting">美猎</option><option value="shelfless_traditional">无台传统弓</option></select></label>
+            <label>箭杆材料<select id="tuningArrowMaterial"><option value="carbon">碳箭杆</option><option value="bamboo_wood">竹 / 木箭杆</option></select></label>
             <label>实测满拉拉重 lb<input id="tuningDrawWeight" type="number" min="5" step="0.5" value="30"></label>
             <label>实测拉距 in<input id="tuningDrawLength" type="number" min="10" step="0.25" value="28"></label>
             <label>箭杆长 in<input id="tuningShaftLength" type="number" min="10" step="0.25" value="29"></label>
+            <label>箭杆外径 mm<input id="tuningShaftDiameter" type="number" min="1" step="0.1" value="6"></label>
             <label>弓把宽度 mm（无台填）<input id="tuningGripWidth" type="number" min="0" step="1" placeholder="自动取一半作中心线偏差"></label>
-            <label>出箭点距中心线 mm<input id="tuningArrowPassOffset" type="number" min="0" step="1" placeholder="无台弓未填弓把宽度时必填"></label>
+            <label>出箭点距中心线 mm<input id="tuningArrowPassOffset" type="number" min="0" step="0.5" placeholder="中心出箭填 0；无台弓需实测"></label>
             <label>裸箭重量 gr（不含箭头）<input id="tuningBareArrowWeight" type="number" min="1" step="1" value="170"></label>
             <label>箭头系统重量 gr<input id="tuningPointWeight" type="number" min="0" step="1" value="100"></label>
             <label>裸箭 ATA 静态 Spine<input id="tuningAtaSpine" type="number" min="100" max="2000" step="1" value="700"></label>
-            <label>纵向落点反馈<select id="tuningVerticalFeedback"><option value="high">高：加重箭头</option><option value="center" selected>中：保持箭头重量</option><option value="low">低：减轻箭头</option></select></label>
-            <label>横向动态反馈<select id="tuningLateralFeedback"><option value="stiff">偏硬：试更硬 Spine</option><option value="neutral" selected>中性：保持 Spine</option><option value="weak">偏软：试更软 Spine</option></select></label>
           </form>
-          <p class="form-hint">拉距是箭尾喉口至弓把 pivot 的实测距离；箭杆长是喉口至箭杆端部。第一阶段以中心线偏差确定绕把净空，再按拉重、拉距和箭杆长换算静态 Spine 候选；箭头重量只在第二阶段按稳定落点反馈调整。</p>
-          <div class="toolbar"><button id="tuningButton" type="button">计算初筛与下一次调箭</button></div>
+          <p class="form-hint">箭杆长为箭尾喉口至箭杆端部；裸箭重量不含箭头系统。中心出箭仍计算释放侧向激励下的动态弯曲，无台弓另外叠加绕过弓把的净空要求。</p>
+          <div class="toolbar"><button id="tuningButton" type="button">计算动态匹配</button></div>
           <p id="tuningError" class="form-error" role="alert"></p>
-          <div class="two-stage-results">
-            <div class="clearance-stage">
-              <h3>第一阶段：绕弓把动态挠度</h3>
-              <dl id="initialSpineSummary" class="summary tool-summary"></dl>
-              <div class="material-results">
-                <div><h4>碳箭杆</h4><dl id="carbonClearanceSummary" class="summary tool-summary"></dl></div>
-                <div><h4>竹 / 木箭杆</h4><dl id="naturalClearanceSummary" class="summary tool-summary"></dl></div>
-              </div>
+          <div class="dynamic-results">
+            <div>
+              <h3>当前动态响应</h3>
+              <dl id="currentDynamicSummary" class="summary tool-summary"></dl>
             </div>
-            <div><h3>第二阶段：落点反馈调箭</h3><dl id="pointTuneSummary" class="summary tool-summary"></dl></div>
+            <div>
+              <h3>推荐匹配区间</h3>
+              <dl id="recommendedSpineSummary" class="summary tool-summary"></dl>
+            </div>
+            <div>
+              <h3>固定箭杆后的调整</h3>
+              <dl id="fixedShaftSummary" class="summary tool-summary"></dl>
+            </div>
           </div>
         </section>
 
@@ -182,8 +185,8 @@
       </section>
     </main>
 
-    <script src="src/model.units.js"></script>
+    <script src="src/model.dynamic.js"></script>
     <script src="src/storage.js"></script>
-    <script src="src/app.units.js"></script>
+    <script src="src/app.dynamic.js"></script>
   </body>
 </html>
