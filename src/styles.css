@@ -211,6 +211,46 @@ textarea {
   grid-column: span 2;
 }
 
+.converter-panel {
+  grid-column: span 2;
+}
+
+.converter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.converter-group {
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 0 14px;
+  border: 0;
+  border-left: 3px solid var(--accent);
+}
+
+.converter-group legend {
+  margin-bottom: 10px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.converter-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr);
+  gap: 8px;
+  align-items: end;
+}
+
+.converter-symbol {
+  display: grid;
+  place-items: center;
+  height: 38px;
+  color: var(--muted);
+  font-size: 18px;
+}
+
 .two-stage-results {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -365,7 +405,8 @@ th {
   .workspace,
   .tool-grid,
   .two-stage-results,
-  .material-results {
+  .material-results,
+  .converter-grid {
     display: grid;
     grid-template-columns: 1fr;
   }
@@ -387,6 +428,10 @@ th {
   }
 
   .two-stage-panel {
+    grid-column: span 1;
+  }
+
+  .converter-panel {
     grid-column: span 1;
   }
 }
