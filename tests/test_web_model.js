@@ -13,6 +13,45 @@ assert.throws(function () {
   ArcherModel.gramsToPounds("not-a-number");
 }, /有效数字/);
 
+const carbonSection = ArcherModel.calculateShaftSection({
+  arrowMaterial: "carbon",
+  outerDiameterMm: 6,
+  innerDiameterMm: 4.2,
+  ataSpine: 700
+});
+assert.equal(carbonSection.sectionType, "hollow");
+assert.ok(Math.abs(carbonSection.secondMomentMm4 - Math.PI / 64 * (6 ** 4 - 4.2 ** 4)) < 1e-9);
+assert.equal(Number(carbonSection.wallThicknessMm.toFixed(2)), 0.9);
+assert.ok(carbonSection.effectiveBendingModulusGpa > 70);
+
+const bambooSection = ArcherModel.calculateShaftSection({
+  arrowMaterial: "bamboo",
+  outerDiameterMm: 8,
+  innerDiameterMm: 4,
+  ataSpine: 700
+});
+assert.equal(bambooSection.sectionType, "hollow");
+assert.ok(Math.abs(bambooSection.secondMomentMm4 - Math.PI / 64 * (8 ** 4 - 4 ** 4)) < 1e-9);
+
+const woodSection = ArcherModel.calculateShaftSection({
+  arrowMaterial: "wood",
+  outerDiameterMm: 8,
+  innerDiameterMm: 7,
+  ataSpine: 700
+});
+assert.equal(woodSection.sectionType, "solid");
+assert.equal(woodSection.innerDiameterMm, 0);
+assert.ok(Math.abs(woodSection.secondMomentMm4 - Math.PI / 64 * 8 ** 4) < 1e-9);
+
+assert.throws(function () {
+  ArcherModel.calculateShaftSection({
+    arrowMaterial: "carbon",
+    outerDiameterMm: 6,
+    innerDiameterMm: 6,
+    ataSpine: 700
+  });
+}, /内径必须小于外径/);
+
 const initial = ArcherModel.estimateBareShaftSpine({
   bowType: "olympic_recurve",
   drawWeightLb: 30,
@@ -44,11 +83,11 @@ assert.deepEqual(
   [913, 1222]
 );
 assert.deepEqual(
-  [clearance.materials.bamboo_wood.dynamicDeflectionMinMm, clearance.materials.bamboo_wood.dynamicDeflectionMaxMm],
+  [clearance.materials.bamboo.dynamicDeflectionMinMm, clearance.materials.bamboo.dynamicDeflectionMaxMm],
   [29, 32]
 );
 assert.deepEqual(
-  [clearance.materials.bamboo_wood.woodSpinePoundsMin, clearance.materials.bamboo_wood.woodSpinePoundsMax],
+  [clearance.materials.wood.woodSpinePoundsMin, clearance.materials.wood.woodSpinePoundsMax],
   [16.2, 23.4]
 );
 
@@ -62,6 +101,7 @@ const centerShot = ArcherModel.analyzeDynamicSpine({
   ataSpine: 700,
   arrowMaterial: "carbon",
   shaftDiameterMm: 6,
+  shaftInnerDiameterMm: 4.2,
   arrowPassOffsetMm: 0
 });
 
@@ -72,6 +112,23 @@ assert.equal(Math.round(centerShot.recommendation.finalLowerIn * 1000), 537);
 assert.equal(Math.round(centerShot.recommendation.finalUpperIn * 1000), 727);
 assert.equal(centerShot.overallMatch, true);
 
+const sameSpineThickerWall = ArcherModel.analyzeDynamicSpine({
+  bowType: "olympic_recurve",
+  drawWeightLb: 30,
+  drawLengthIn: 28,
+  shaftLengthIn: 29,
+  bareArrowWeightGr: 170,
+  pointWeightGr: 100,
+  ataSpine: 700,
+  arrowMaterial: "carbon",
+  shaftDiameterMm: 6,
+  shaftInnerDiameterMm: 3.8,
+  arrowPassOffsetMm: 0
+});
+assert.equal(sameSpineThickerWall.current.dynamicDeflectionMinMm, centerShot.current.dynamicDeflectionMinMm);
+assert.notEqual(sameSpineThickerWall.section.secondMomentMm4, centerShot.section.secondMomentMm4);
+assert.notEqual(sameSpineThickerWall.section.effectiveBendingModulusGpa, centerShot.section.effectiveBendingModulusGpa);
+
 const traditionalDynamic = ArcherModel.analyzeDynamicSpine({
   bowType: "shelfless_traditional",
   drawWeightLb: 30,
@@ -80,8 +137,9 @@ const traditionalDynamic = ArcherModel.analyzeDynamicSpine({
   bareArrowWeightGr: 190,
   pointWeightGr: 100,
   ataSpine: 700,
-  arrowMaterial: "bamboo_wood",
+  arrowMaterial: "bamboo",
   shaftDiameterMm: 8,
+  shaftInnerDiameterMm: 4,
   gripWidthMm: 50
 });
 
@@ -96,6 +154,7 @@ assert.ok(traditionalDynamic.adjustments.targetPointWeightGr > 100);
 assert.equal(traditionalDynamic.adjustments.pointClearancePass, true);
 assert.equal(traditionalDynamic.clearanceStatus, "overlap");
 assert.equal(traditionalDynamic.adjustments.pointClearanceStatus, "overlap");
+assert.equal(traditionalDynamic.section.sectionType, "hollow");
 
 const adjustment = ArcherModel.recommendPointWeightAdjustment({
   drawWeightLb: 30,
@@ -118,7 +177,7 @@ assert.throws(function () {
     bareArrowWeightGr: 190,
     pointWeightGr: 100,
     ataSpine: 700,
-    arrowMaterial: "bamboo_wood",
+    arrowMaterial: "wood",
     shaftDiameterMm: 8
   });
 }, /测量弓把宽度/);
