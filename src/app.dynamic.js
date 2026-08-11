@@ -322,16 +322,23 @@
   function renderDynamicRecommendation(result) {
     var list = elements.recommendedSpineSummary;
     var recommendation = result.recommendation;
-    addDefinitionRow(list, "基础裸箭挠度推荐", formatSpineRange(recommendation.empiricalLowerIn, recommendation.empiricalUpperIn));
+    addDefinitionRow(list, "基础裸箭挠度推荐（100 gr 基准）", formatSpineRange(recommendation.empiricalLowerIn, recommendation.empiricalUpperIn));
     addDefinitionRow(list, "常见成品挠度候选", recommendation.productAtaCandidates.map(function (value) {
       return "ATA " + value;
     }).join("、") + "（购买前核对厂商规格）");
     if (recommendation.hasClearanceConstraint) {
-      addDefinitionRow(list, "避开弓把所需动态挠度", formatRange(recommendation.requiredDynamicMinMm, recommendation.requiredDynamicMaxMm, 1, "mm"));
+      addDefinitionRow(list, "避开弓把最低动态侧移", "≥ " + formatNumber(recommendation.requiredDynamicMinMm, 1) + " mm");
     } else {
       addDefinitionRow(list, "弓把避让", "中心出箭，无需额外避让弓把；仍计算动态弯曲");
     }
     addDefinitionRow(list, "基础推荐对应动态挠度", formatDynamicDeflectionRange(recommendation.recommendedDynamicMinMm, recommendation.recommendedDynamicMaxMm));
+    if (recommendation.calibrationConflict) {
+      addDefinitionRow(list, "核准结果", "最低弓把避让需求高于基础推荐动态上限，请复核中心线尺寸并试相邻箭杆");
+    } else {
+      addDefinitionRow(list, "偏硬侧动态核准值", "ATA 等效 "
+        + Math.round(window.ArcherModel.millimetersToAtaSpine(recommendation.calibrationTargetMm))
+        + "（" + formatNumber(recommendation.calibrationTargetMm, 1) + " mm）");
+    }
     if (recommendation.woodSpinePoundsMin != null) {
       addDefinitionRow(list, "传统木箭标磅近似", formatRange(recommendation.woodSpinePoundsMin, recommendation.woodSpinePoundsMax, 1, "lb"));
     }
@@ -340,18 +347,28 @@
   function renderFixedShaftAdjustments(result) {
     var list = elements.fixedShaftSummary;
     var adjustment = result.adjustments;
-    addDefinitionRow(list, "调整目标", "使预测动态挠度与基础推荐对应动态挠度基本重合："
-      + formatDynamicDeflectionRange(adjustment.targetDynamicMinMm, adjustment.targetDynamicMaxMm));
+    if (adjustment.targetDynamicMm == null) {
+      addDefinitionRow(list, "调整目标", "基础推荐动态范围与最低弓把避让需求冲突，暂不生成调整值");
+      return;
+    }
+    addDefinitionRow(list, "调整目标", "使预测动态挠度下限接近偏硬侧核准值：ATA 等效 "
+      + Math.round(window.ArcherModel.millimetersToAtaSpine(adjustment.targetDynamicMm))
+      + "（" + formatNumber(adjustment.targetDynamicMm, 1) + " mm）");
+    if (result.dynamicMatch && result.clearanceMatch) {
+      addDefinitionRow(list, "当前状态", "已满足基础动态范围和最低弓把避让；以下为核准值参考");
+    }
     if (adjustment.targetPointWeightGr == null) {
-      addDefinitionRow(list, "箭重方案", "无法用非负箭头重量达到推荐中心，请改用更硬箭杆或调整箭长");
+      addDefinitionRow(list, "箭重方案", "即使箭头系统减至 0 gr 仍无法达到核准值，请改用更硬箭杆或参考理论箭长");
     } else {
       addDefinitionRow(list, "箭重方案", "箭头系统 " + formatNumber(adjustment.targetPointWeightGr, 1) + " gr（" + signedNumber(adjustment.pointWeightDeltaGr, 1) + " gr），成品 " + formatNumber(adjustment.targetFinishedArrowWeightGr, 1) + " gr");
       addDefinitionRow(list, "箭重后动态挠度", formatDynamicDeflectionRange(adjustment.pointDynamicMinMm, adjustment.pointDynamicMaxMm) + clearanceSuffix(result, adjustment.pointClearanceStatus));
     }
-    addDefinitionRow(list, "箭长方案", formatNumber(adjustment.targetShaftLengthIn, 2) + " in（"
-      + signedNumber(adjustment.shaftLengthDeltaIn, 2) + " in）"
-      + (adjustment.lengthBelowDrawLength ? "；理论值短于实测拉距，不可直接采用" : ""));
-    addDefinitionRow(list, "箭长后动态挠度", formatDynamicDeflectionRange(adjustment.lengthDynamicMinMm, adjustment.lengthDynamicMaxMm) + clearanceSuffix(result, adjustment.lengthClearanceStatus));
+    if (adjustment.targetShaftLengthIn != null) {
+      addDefinitionRow(list, "箭长方案", formatNumber(adjustment.targetShaftLengthIn, 2) + " in（"
+        + signedNumber(adjustment.shaftLengthDeltaIn, 2) + " in）"
+        + (adjustment.lengthBelowDrawLength ? "；理论值短于实测拉距，不可直接采用" : ""));
+      addDefinitionRow(list, "箭长后动态挠度", formatDynamicDeflectionRange(adjustment.lengthDynamicMinMm, adjustment.lengthDynamicMaxMm) + clearanceSuffix(result, adjustment.lengthClearanceStatus));
+    }
   }
 
   function formatSpineRange(lowerIn, upperIn) {
@@ -393,20 +410,21 @@
   }
 
   function currentMatchLabel(result) {
-    if (!result.staticMatch) return "静态挠度不在综合推荐区间，需调整或试相邻挠度";
-    if (result.clearanceStatus === "overlap") return "静态匹配；弓把避让范围部分重叠，需实射验证";
+    if (result.recommendation.calibrationConflict) return "基础动态范围与最低弓把避让需求冲突，需复核配置";
     if (result.clearanceStatus === "insufficient") return "侧弯不足以避开弓把";
-    if (result.clearanceStatus === "excessive") return "侧弯超过建议避让范围";
-    return "在综合推荐区间内";
+    if (result.dynamicMatchStatus === "too-soft") return "动态挠度超过基础推荐上限，存在箭杆偏软风险";
+    if (result.dynamicMatchStatus === "too-stiff") return "动态挠度低于基础推荐下限，存在箭杆偏硬风险";
+    if (result.clearanceStatus === "uncertain") return "动态范围跨越最低避让值，需实射验证";
+    if (!result.staticMatch) return "静态挠度不在基础推荐区间，建议试相邻挠度";
+    return "满足基础动态范围和最低弓把避让";
   }
 
   function clearanceSuffix(result, status) {
     if (!result.recommendation.hasClearanceConstraint) return "";
     var labels = {
-      within: "完全落入目标",
-      overlap: "部分重叠，需实射验证",
+      satisfied: "达到最低需求",
+      uncertain: "跨越最低值，需实射验证",
       insufficient: "挠度不足",
-      excessive: "挠度过量",
       unavailable: "不可计算"
     };
     return "；弓把避让" + (labels[status] || "需复核");
