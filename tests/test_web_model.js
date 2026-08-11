@@ -158,16 +158,23 @@ assert.equal(traditionalDynamic.adjustments.pointClearancePass, true);
 assert.equal(traditionalDynamic.clearanceStatus, "overlap");
 assert.equal(traditionalDynamic.adjustments.pointClearanceStatus, "overlap");
 assert.equal(traditionalDynamic.section.sectionType, "hollow");
-assert.equal(traditionalDynamic.adjustments.targetSource, "handle-clearance");
-assert.equal(traditionalDynamic.adjustments.targetDynamicCenterMm, 30.5);
-assert.ok(Math.abs(
-  (traditionalDynamic.adjustments.pointDynamicMinMm + traditionalDynamic.adjustments.pointDynamicMaxMm) / 2
-    - traditionalDynamic.adjustments.targetDynamicCenterMm
-) < 1e-6);
-assert.ok(Math.abs(
-  (traditionalDynamic.adjustments.lengthDynamicMinMm + traditionalDynamic.adjustments.lengthDynamicMaxMm) / 2
-    - traditionalDynamic.adjustments.targetDynamicCenterMm
-) < 1e-6);
+assert.equal(traditionalDynamic.adjustments.targetSource, "equipment-screening");
+assert.equal(
+  traditionalDynamic.adjustments.targetDynamicMinMm,
+  traditionalDynamic.recommendation.recommendedDynamicMinMm
+);
+assert.equal(
+  traditionalDynamic.adjustments.targetDynamicMaxMm,
+  traditionalDynamic.recommendation.recommendedDynamicMaxMm
+);
+assert.ok(
+  traditionalDynamic.adjustments.pointDynamicMaxMm >= traditionalDynamic.adjustments.targetDynamicMinMm
+    && traditionalDynamic.adjustments.pointDynamicMinMm <= traditionalDynamic.adjustments.targetDynamicMaxMm
+);
+assert.ok(
+  traditionalDynamic.adjustments.lengthDynamicMaxMm >= traditionalDynamic.adjustments.targetDynamicMinMm
+    && traditionalDynamic.adjustments.lengthDynamicMinMm <= traditionalDynamic.adjustments.targetDynamicMaxMm
+);
 
 const adjustment = ArcherModel.recommendPointWeightAdjustment({
   drawWeightLb: 30,
