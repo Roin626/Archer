@@ -129,18 +129,19 @@
           </div>
           <form id="tuningForm" class="setup-grid tool-form">
             <label>弓型<select id="tuningBowType"><option value="olympic_recurve">竞技反曲</option><option value="barebow">光弓</option><option value="compound">复合弓</option><option value="american_hunting">美猎</option><option value="shelfless_traditional">无台传统弓</option></select></label>
-            <label>箭杆材料<select id="tuningArrowMaterial"><option value="carbon">碳箭杆</option><option value="bamboo_wood">竹 / 木箭杆</option></select></label>
+            <label>箭杆材料<select id="tuningArrowMaterial"><option value="carbon">碳箭杆（空心）</option><option value="bamboo">拼竹箭杆（空心）</option><option value="wood">木箭杆（实心）</option></select></label>
             <label>实测满拉拉重 lb<input id="tuningDrawWeight" type="number" min="5" step="0.5" value="30"></label>
             <label>实测拉距 in<input id="tuningDrawLength" type="number" min="10" step="0.25" value="28"></label>
             <label>箭杆长 in<input id="tuningShaftLength" type="number" min="10" step="0.25" value="29"></label>
             <label>箭杆外径 mm<input id="tuningShaftDiameter" type="number" min="1" step="0.1" value="6"></label>
+            <label>箭杆内径 mm（空心箭杆）<input id="tuningShaftInnerDiameter" type="number" min="0.1" step="0.1" value="4.2"></label>
             <label>弓把宽度 mm（无台填）<input id="tuningGripWidth" type="number" min="0" step="1" placeholder="自动取一半作中心线偏差"></label>
             <label>出箭点距中心线 mm<input id="tuningArrowPassOffset" type="number" min="0" step="0.5" placeholder="中心出箭填 0；无台弓需实测"></label>
             <label>裸箭重量 gr（不含箭头）<input id="tuningBareArrowWeight" type="number" min="1" step="1" value="170"></label>
             <label>箭头系统重量 gr<input id="tuningPointWeight" type="number" min="0" step="1" value="100"></label>
             <label>裸箭 ATA 静态 Spine<input id="tuningAtaSpine" type="number" min="100" max="2000" step="1" value="700"></label>
           </form>
-          <p class="form-hint">箭杆长为箭尾喉口至箭杆端部；裸箭重量不含箭头系统。中心出箭仍计算动态弯曲；无台弓另外计算避开弓把所需的侧弯量。静态结果统一显示 ATA 与毫米测试位移。</p>
+          <p class="form-hint">碳箭杆和拼竹箭杆按内外径计算空心圆管截面，木箭杆按实心圆杆计算。ATA 实测值用于确定整杆弯曲刚度；截面尺寸用于核对惯性矩和等效弯曲模量。箭杆长为箭尾喉口至箭杆端部。</p>
           <div class="toolbar"><button id="tuningButton" type="button">计算动态匹配</button></div>
           <p id="tuningError" class="form-error" role="alert"></p>
           <div class="dynamic-results">
@@ -185,8 +186,8 @@
       </section>
     </main>
 
-    <script src="src/model.dynamic.js?v=4"></script>
+    <script src="src/model.dynamic.js?v=5"></script>
     <script src="src/storage.js"></script>
-    <script src="src/app.dynamic.js?v=4"></script>
+    <script src="src/app.dynamic.js?v=5"></script>
   </body>
 </html>
