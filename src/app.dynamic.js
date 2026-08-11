@@ -327,7 +327,7 @@
       return "ATA " + value;
     }).join("、") + "（购买前核对厂商规格）");
     if (recommendation.hasClearanceConstraint) {
-      addDefinitionRow(list, "避开弓把所需动态挠度", formatDynamicDeflectionRange(recommendation.requiredDynamicMinMm, recommendation.requiredDynamicMaxMm));
+      addDefinitionRow(list, "避开弓把所需动态挠度", formatRange(recommendation.requiredDynamicMinMm, recommendation.requiredDynamicMaxMm, 1, "mm"));
     } else {
       addDefinitionRow(list, "弓把避让", "中心出箭，无需额外避让弓把；仍计算动态弯曲");
     }
@@ -340,23 +340,18 @@
   function renderFixedShaftAdjustments(result) {
     var list = elements.fixedShaftSummary;
     var adjustment = result.adjustments;
-    addDefinitionRow(list, "调整目标", (adjustment.targetSource === "handle-clearance"
-      ? "避开弓把所需动态挠度的区间中心 "
-      : "基础推荐对应动态挠度的区间中心 ")
-      + "ATA 等效 " + Math.round(window.ArcherModel.millimetersToAtaSpine(adjustment.targetDynamicCenterMm))
-      + "（" + formatNumber(adjustment.targetDynamicCenterMm, 1) + " mm）");
+    addDefinitionRow(list, "调整目标", "使预测动态挠度与基础推荐对应动态挠度基本重合："
+      + formatDynamicDeflectionRange(adjustment.targetDynamicMinMm, adjustment.targetDynamicMaxMm));
     if (adjustment.targetPointWeightGr == null) {
       addDefinitionRow(list, "箭重方案", "无法用非负箭头重量达到推荐中心，请改用更硬箭杆或调整箭长");
     } else {
       addDefinitionRow(list, "箭重方案", "箭头系统 " + formatNumber(adjustment.targetPointWeightGr, 1) + " gr（" + signedNumber(adjustment.pointWeightDeltaGr, 1) + " gr），成品 " + formatNumber(adjustment.targetFinishedArrowWeightGr, 1) + " gr");
       addDefinitionRow(list, "箭重后动态挠度", formatDynamicDeflectionRange(adjustment.pointDynamicMinMm, adjustment.pointDynamicMaxMm) + clearanceSuffix(result, adjustment.pointClearanceStatus));
     }
-    if (adjustment.targetShaftLengthIn == null) {
-      addDefinitionRow(list, "箭长方案", "目标箭长会短于实测拉距，不提供不安全的裁剪建议");
-    } else {
-      addDefinitionRow(list, "箭长方案", formatNumber(adjustment.targetShaftLengthIn, 2) + " in（" + signedNumber(adjustment.shaftLengthDeltaIn, 2) + " in）");
-      addDefinitionRow(list, "箭长后动态挠度", formatDynamicDeflectionRange(adjustment.lengthDynamicMinMm, adjustment.lengthDynamicMaxMm) + clearanceSuffix(result, adjustment.lengthClearanceStatus));
-    }
+    addDefinitionRow(list, "箭长方案", formatNumber(adjustment.targetShaftLengthIn, 2) + " in（"
+      + signedNumber(adjustment.shaftLengthDeltaIn, 2) + " in）"
+      + (adjustment.lengthBelowDrawLength ? "；理论值短于实测拉距，不可直接采用" : ""));
+    addDefinitionRow(list, "箭长后动态挠度", formatDynamicDeflectionRange(adjustment.lengthDynamicMinMm, adjustment.lengthDynamicMaxMm) + clearanceSuffix(result, adjustment.lengthClearanceStatus));
   }
 
   function formatSpineRange(lowerIn, upperIn) {
