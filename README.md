@@ -48,7 +48,7 @@ start_archer.bat
 python scripts/spine_estimator.py from-weight --bow-type olympic_recurve --draw-weight 30 --shaft-length 30 --finished-arrow-weight 270 --arrow-pass-offset-mm 0
 ```
 
-网页的“动态挠度与器材匹配”明确区分拉距（箭尾喉口至弓把 pivot）与箭杆长（箭尾喉口至箭杆端部）。中心出箭器材仍计算释放侧向激励下的动态弯曲；无台传统弓再计算避开弓把所需的侧弯量。静态结果显示 ATA 编号和对应的毫米测试位移，动态结果显示毫米。详细公式和限制见 `docs/spine-model.md`。
+网页的“动态挠度与器材匹配”明确区分拉距（箭尾喉口至弓把 pivot）与箭杆长（箭尾喉口至箭杆端部）。碳箭杆和拼竹箭杆按空心圆管处理，输入内外径；木箭杆按实心圆杆处理。模型以 ATA 实测值确定整杆 `EI`，截面尺寸用于计算惯性矩和反推等效弯曲模量，避免重复修正刚度。中心出箭器材仍计算释放侧向激励下的动态弯曲；无台传统弓再计算避开弓把所需的侧弯量。详细公式和限制见 `docs/spine-model.md`。
 
 ```powershell
 python scripts/spine_estimator.py from-spine --bow-type olympic_recurve --draw-weight 30 --shaft-length 30 --ata-spine 700 --arrow-pass-offset-mm 0
