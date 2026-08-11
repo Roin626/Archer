@@ -147,13 +147,14 @@ shafts. The interface also lists common nominal ATA values that fall inside
 that range; these are generic candidates and must be checked against the actual
 manufacturer catalogue.
 
-For a non-center-shot bow, the midpoint of `C_min-C_max` is the adjustment
-target. With static deflection fixed, the calculator numerically solves point
-system mass and shaft length as two alternative ways to make the predicted
-dynamic-deflection midpoint approach that target. For center-shot equipment,
-the midpoint of the basic recommendation's predicted dynamic range remains the
-target. The two adjustment schemes are alternatives, not instructions to apply
-both changes simultaneously.
+The handle-clearance range is displayed only in millimeters because it is a
+geometric displacement threshold, not an ATA static specification. With static
+deflection fixed, the calculator solves point-system mass and shaft length as
+two alternative ways to bring the predicted dynamic range back toward the
+basic screening recommendation. A theoretical shaft length below measured draw
+length is still displayed for auditability but is explicitly marked unsafe and
+must not be used as a cutting instruction. The two adjustment schemes are
+alternatives, not instructions to apply both changes simultaneously.
 
 Use all results only to select adjacent test shafts and test configurations.
 Final acceptance still requires bare-shaft or paper tuning. Static spine alone
