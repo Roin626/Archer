@@ -3,6 +3,14 @@ const assert = require("node:assert/strict");
 global.window = global;
 require("../src/model.js");
 
+assert.equal(ArcherModel.gramsToPounds(453.59237), 1);
+assert.equal(ArcherModel.poundsToGrams(1), 453.59237);
+assert.equal(ArcherModel.inchesToMillimeters(1), 25.4);
+assert.equal(ArcherModel.millimetersToInches(25.4), 1);
+assert.throws(function () {
+  ArcherModel.gramsToPounds("not-a-number");
+}, /有效数字/);
+
 const initial = ArcherModel.estimateBareShaftSpine({
   bowType: "olympic_recurve",
   drawWeightLb: 30,
