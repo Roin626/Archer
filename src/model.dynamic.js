@@ -186,18 +186,32 @@
   var ATA_TEST_LOAD_LB = 1.94;
   var ATA_TEST_SPAN_IN = 28;
   var MM_PER_INCH = 25.4;
+  var NEWTONS_PER_POUND_FORCE = 4.4482216152605;
   var GRAMS_PER_POUND = 453.59237;
   var handleClearanceMaterials = {
     carbon: {
       label: "碳箭杆",
+      sectionType: "hollow",
       assumedDiameterMm: 6,
+      assumedInnerDiameterMm: 4.2,
       extraClearanceMm: 2,
       dynamicFactorMin: 1.6,
       dynamicFactorMax: 2.0
     },
-    bamboo_wood: {
-      label: "竹 / 木箭杆",
+    bamboo: {
+      label: "拼竹空心箭杆",
+      sectionType: "hollow",
       assumedDiameterMm: 8,
+      assumedInnerDiameterMm: 4,
+      extraClearanceMm: 3,
+      dynamicFactorMin: 1.3,
+      dynamicFactorMax: 1.7
+    },
+    wood: {
+      label: "实心木箭杆",
+      sectionType: "solid",
+      assumedDiameterMm: 8,
+      assumedInnerDiameterMm: 0,
       extraClearanceMm: 3,
       dynamicFactorMin: 1.3,
       dynamicFactorMax: 1.7
@@ -296,6 +310,52 @@
     return finiteNumber(millimeters, "静态测试位移") / MM_PER_INCH * 1000;
   }
 
+  function normalizeArrowMaterial(material) {
+    var key = String(material || "carbon").trim().toLowerCase();
+    if (key === "bamboo_wood") key = "bamboo";
+    if (!handleClearanceMaterials[key]) {
+      throw new Error("不支持的箭杆材料: " + material);
+    }
+    return key;
+  }
+
+  function calculateShaftSection(input) {
+    var materialKey = normalizeArrowMaterial(input.arrowMaterial);
+    var material = handleClearanceMaterials[materialKey];
+    var outerDiameterMm = positiveNumber(input.outerDiameterMm, "箭杆外径");
+    var innerDiameterMm = material.sectionType === "solid"
+      ? 0
+      : positiveNumber(input.innerDiameterMm, "空心箭杆内径");
+    if (innerDiameterMm >= outerDiameterMm) {
+      throw new Error("箭杆内径必须小于外径");
+    }
+
+    var outerSquared = Math.pow(outerDiameterMm, 2);
+    var innerSquared = Math.pow(innerDiameterMm, 2);
+    var areaMm2 = Math.PI / 4 * (outerSquared - innerSquared);
+    var secondMomentMm4 = Math.PI / 64 * (
+      Math.pow(outerDiameterMm, 4) - Math.pow(innerDiameterMm, 4)
+    );
+    var staticDeflectionMm = ataSpineToMillimeters(positiveNumber(input.ataSpine, "裸箭 ATA 静态 Spine"));
+    var testSpanMm = ATA_TEST_SPAN_IN * MM_PER_INCH;
+    var testLoadN = ATA_TEST_LOAD_LB * NEWTONS_PER_POUND_FORCE;
+    var flexuralRigidityNmm2 = testLoadN * Math.pow(testSpanMm, 3) / (48 * staticDeflectionMm);
+    var effectiveBendingModulusGpa = flexuralRigidityNmm2 / secondMomentMm4 / 1000;
+
+    return {
+      materialKey: materialKey,
+      sectionType: material.sectionType,
+      outerDiameterMm: outerDiameterMm,
+      innerDiameterMm: innerDiameterMm,
+      wallThicknessMm: material.sectionType === "hollow" ? (outerDiameterMm - innerDiameterMm) / 2 : null,
+      areaMm2: areaMm2,
+      secondMomentMm4: secondMomentMm4,
+      staticDeflectionMm: staticDeflectionMm,
+      flexuralRigidityNmm2: flexuralRigidityNmm2,
+      effectiveBendingModulusGpa: effectiveBendingModulusGpa
+    };
+  }
+
   function clamp(value, minimum, maximum) {
     return Math.min(maximum, Math.max(minimum, value));
   }
@@ -308,11 +368,22 @@
     var bareArrowWeightGr = positiveNumber(input.bareArrowWeightGr, "裸箭重量");
     var pointWeightGr = nonNegativeNumber(input.pointWeightGr, "箭头系统重量");
     var staticDeflectionIn = positiveNumber(input.ataSpine, "裸箭 ATA 静态 Spine") / 1000;
-    var materialKey = input.arrowMaterial === "bamboo_wood" ? "bamboo_wood" : "carbon";
+    var materialKey = normalizeArrowMaterial(input.arrowMaterial);
     var material = handleClearanceMaterials[materialKey];
     var shaftDiameterMm = input.shaftDiameterMm === "" || input.shaftDiameterMm == null
       ? material.assumedDiameterMm
       : positiveNumber(input.shaftDiameterMm, "箭杆外径");
+    var shaftInnerDiameterMm = material.sectionType === "solid"
+      ? 0
+      : input.shaftInnerDiameterMm === "" || input.shaftInnerDiameterMm == null
+        ? material.assumedInnerDiameterMm
+        : positiveNumber(input.shaftInnerDiameterMm, "空心箭杆内径");
+    var section = calculateShaftSection({
+      arrowMaterial: materialKey,
+      outerDiameterMm: shaftDiameterMm,
+      innerDiameterMm: shaftInnerDiameterMm,
+      ataSpine: input.ataSpine
+    });
     var baseline = genericSpineBaselines[bowType];
     var gripWidthMm = input.gripWidthMm === "" || input.gripWidthMm == null
       ? null
@@ -341,6 +412,8 @@
       finishedArrowWeightGr: bareArrowWeightGr + pointWeightGr,
       staticDeflectionIn: staticDeflectionIn,
       shaftDiameterMm: shaftDiameterMm,
+      shaftInnerDiameterMm: shaftInnerDiameterMm,
+      section: section,
       arrowPassOffsetMm: useGripWidth
         ? gripWidthMm / 2
         : manualOffsetMm == null ? baseline.referenceOffsetMm : manualOffsetMm,
@@ -430,8 +503,8 @@
       finalCenterIn: conflict ? null : (finalLowerIn + finalUpperIn) / 2,
       recommendedDynamicMinMm: recommendedDynamicMinMm,
       recommendedDynamicMaxMm: recommendedDynamicMaxMm,
-      woodSpinePoundsMin: conflict || setup.materialKey !== "bamboo_wood" ? null : 26 / finalUpperIn,
-      woodSpinePoundsMax: conflict || setup.materialKey !== "bamboo_wood" ? null : 26 / finalLowerIn,
+      woodSpinePoundsMin: conflict || setup.materialKey !== "wood" ? null : 26 / finalUpperIn,
+      woodSpinePoundsMax: conflict || setup.materialKey !== "wood" ? null : 26 / finalLowerIn,
       conflict: conflict
     };
   }
@@ -531,6 +604,8 @@
       staticDeflectionIn: setup.staticDeflectionIn,
       ataSpine: Math.round(setup.staticDeflectionIn * 1000),
       shaftDiameterMm: setup.shaftDiameterMm,
+      shaftInnerDiameterMm: setup.shaftInnerDiameterMm,
+      section: setup.section,
       arrowPassOffsetMm: setup.arrowPassOffsetMm,
       offsetSource: setup.offsetSource,
       current: response,
@@ -708,8 +783,8 @@
         assumedDiameterMm: settings.assumedDiameterMm,
         dynamicFactorMin: settings.dynamicFactorMin,
         dynamicFactorMax: settings.dynamicFactorMax,
-        woodSpinePoundsMin: key === "bamboo_wood" ? Number((26 / staticDeflectionMaxIn).toFixed(1)) : null,
-        woodSpinePoundsMax: key === "bamboo_wood" ? Number((26 / staticDeflectionMinIn).toFixed(1)) : null
+        woodSpinePoundsMin: key === "wood" ? Number((26 / staticDeflectionMaxIn).toFixed(1)) : null,
+        woodSpinePoundsMax: key === "wood" ? Number((26 / staticDeflectionMinIn).toFixed(1)) : null
       };
     });
 
@@ -953,6 +1028,7 @@
     millimetersToInches: millimetersToInches,
     ataSpineToMillimeters: ataSpineToMillimeters,
     millimetersToAtaSpine: millimetersToAtaSpine,
+    calculateShaftSection: calculateShaftSection,
     estimateBareShaftSpine: estimateBareShaftSpine,
     estimateStaticSpine: estimateStaticSpine,
     estimateFinishedArrowWeight: estimateFinishedArrowWeight,
