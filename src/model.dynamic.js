@@ -514,8 +514,9 @@
 
   function assessClearance(dynamicMinMm, dynamicMaxMm, recommendation) {
     if (!recommendation.hasClearanceConstraint) return "not-applicable";
-    if (dynamicMaxMm < recommendation.requiredDynamicMinMm) return "insufficient";
-    if (dynamicMinMm >= recommendation.requiredDynamicMinMm) return "satisfied";
+    var toleranceMm = 1e-6;
+    if (dynamicMaxMm < recommendation.requiredDynamicMinMm - toleranceMm) return "insufficient";
+    if (dynamicMinMm >= recommendation.requiredDynamicMinMm - toleranceMm) return "satisfied";
     return "uncertain";
   }
 
