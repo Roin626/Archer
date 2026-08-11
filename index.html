@@ -140,7 +140,7 @@
             <label>箭头系统重量 gr<input id="tuningPointWeight" type="number" min="0" step="1" value="100"></label>
             <label>裸箭 ATA 静态 Spine<input id="tuningAtaSpine" type="number" min="100" max="2000" step="1" value="700"></label>
           </form>
-          <p class="form-hint">箭杆长为箭尾喉口至箭杆端部；裸箭重量不含箭头系统。中心出箭仍计算释放侧向激励下的动态弯曲，无台弓另外叠加绕过弓把的净空要求。</p>
+          <p class="form-hint">箭杆长为箭尾喉口至箭杆端部；裸箭重量不含箭头系统。中心出箭仍计算动态弯曲；无台弓另外计算避开弓把所需的侧弯量。静态结果统一显示 ATA 与毫米测试位移。</p>
           <div class="toolbar"><button id="tuningButton" type="button">计算动态匹配</button></div>
           <p id="tuningError" class="form-error" role="alert"></p>
           <div class="dynamic-results">
@@ -185,8 +185,8 @@
       </section>
     </main>
 
-    <script src="src/model.dynamic.js?v=3"></script>
+    <script src="src/model.dynamic.js?v=4"></script>
     <script src="src/storage.js"></script>
-    <script src="src/app.dynamic.js?v=3"></script>
+    <script src="src/app.dynamic.js?v=4"></script>
   </body>
 </html>
