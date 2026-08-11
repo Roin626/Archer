@@ -186,6 +186,7 @@
   var ATA_TEST_LOAD_LB = 1.94;
   var ATA_TEST_SPAN_IN = 28;
   var MM_PER_INCH = 25.4;
+  var GRAMS_PER_POUND = 453.59237;
   var handleClearanceMaterials = {
     carbon: {
       label: "碳箭杆",
@@ -254,6 +255,30 @@
       throw new Error(label + "不能为负数");
     }
     return number;
+  }
+
+  function finiteNumber(value, label) {
+    var number = Number(value);
+    if (!Number.isFinite(number)) {
+      throw new Error(label + "必须是有效数字");
+    }
+    return number;
+  }
+
+  function gramsToPounds(grams) {
+    return finiteNumber(grams, "克") / GRAMS_PER_POUND;
+  }
+
+  function poundsToGrams(pounds) {
+    return finiteNumber(pounds, "磅") * GRAMS_PER_POUND;
+  }
+
+  function inchesToMillimeters(inches) {
+    return finiteNumber(inches, "英寸") * MM_PER_INCH;
+  }
+
+  function millimetersToInches(millimeters) {
+    return finiteNumber(millimeters, "毫米") / MM_PER_INCH;
   }
 
   function chartNextStep(bowType) {
@@ -659,6 +684,10 @@
     buildEquipmentMatrix: buildEquipmentMatrix,
     calculateStaticSpineScreening: calculateStaticSpineScreening,
     calculateHandleClearanceRanges: calculateHandleClearanceRanges,
+    gramsToPounds: gramsToPounds,
+    poundsToGrams: poundsToGrams,
+    inchesToMillimeters: inchesToMillimeters,
+    millimetersToInches: millimetersToInches,
     estimateBareShaftSpine: estimateBareShaftSpine,
     estimateStaticSpine: estimateStaticSpine,
     estimateFinishedArrowWeight: estimateFinishedArrowWeight,
