@@ -92,6 +92,8 @@ assert.equal(Math.round(traditionalDynamic.recommendation.finalLowerIn * 1000), 
 assert.equal(Math.round(traditionalDynamic.recommendation.finalUpperIn * 1000), 867);
 assert.ok(traditionalDynamic.adjustments.targetPointWeightGr > 100);
 assert.equal(traditionalDynamic.adjustments.pointClearancePass, true);
+assert.equal(traditionalDynamic.clearanceStatus, "overlap");
+assert.equal(traditionalDynamic.adjustments.pointClearanceStatus, "overlap");
 
 const adjustment = ArcherModel.recommendPointWeightAdjustment({
   drawWeightLb: 30,
