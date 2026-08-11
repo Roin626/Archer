@@ -124,7 +124,7 @@ Material transient bounds remain:
 | Laminated bamboo, hollow | 8 mm | 3 mm | 1.3-1.7 |
 | Wood, solid | 8 mm | 3 mm | 1.3-1.7 |
 
-The manufacturer-style recommendation is calculated as:
+The basic bare-shaft screening recommendation is calculated as:
 
 ```text
 recommended_static = bow_baseline
@@ -133,24 +133,27 @@ recommended_static = bow_baseline
 ```
 
 Each bow type has its own baseline and screening band. For any non-zero
-centerline offset, the calculator also derives a handle-clearance static range:
+centerline offset, the calculator separately derives the required dynamic
+deflection for handle clearance:
 
 ```text
 C_min = e_mm + shaft_diameter / 2
 C_max = C_min + clearance_allowance
-clearance_static_min = C_min / (25.4 * k_max * R)
-clearance_static_max = C_max / (25.4 * k_min * R)
 ```
 
-The displayed final recommendation is the overlap between the equipment-match
-range and the bow-handle avoidance range. In the Chinese interface this is
-called "避开弓把所需侧弯" rather than "clearance deflection". A center-shot bow omits only this
-geometric clearance constraint; it does not omit dynamic deflection.
+The basic screening range is not intersected with a static deflection inferred
+from handle clearance. It remains the starting range for buying adjacent test
+shafts. The interface also lists common nominal ATA values that fall inside
+that range; these are generic candidates and must be checked against the actual
+manufacturer catalogue.
 
-When static spine is fixed, the calculator algebraically solves the same model
-for either point-system mass (and therefore finished arrow mass) or shaft
-length. These are center-target alternatives, not instructions to apply both
-changes simultaneously.
+For a non-center-shot bow, the midpoint of `C_min-C_max` is the adjustment
+target. With static deflection fixed, the calculator numerically solves point
+system mass and shaft length as two alternative ways to make the predicted
+dynamic-deflection midpoint approach that target. For center-shot equipment,
+the midpoint of the basic recommendation's predicted dynamic range remains the
+target. The two adjustment schemes are alternatives, not instructions to apply
+both changes simultaneously.
 
 Use all results only to select adjacent test shafts and test configurations.
 Final acceptance still requires bare-shaft or paper tuning. Static spine alone
