@@ -32,6 +32,7 @@
       tuningDrawLength: document.getElementById("tuningDrawLength"),
       tuningShaftLength: document.getElementById("tuningShaftLength"),
       tuningShaftDiameter: document.getElementById("tuningShaftDiameter"),
+      tuningShaftInnerDiameter: document.getElementById("tuningShaftInnerDiameter"),
       tuningGripWidth: document.getElementById("tuningGripWidth"),
       tuningArrowPassOffset: document.getElementById("tuningArrowPassOffset"),
       tuningBareArrowWeight: document.getElementById("tuningBareArrowWeight"),
@@ -52,6 +53,7 @@
     session = window.ArcherStorage.loadSession() || window.ArcherModel.createSession(readForm());
     writeForm(session);
     render();
+    updateMaterialDefaults();
     renderDynamicSpineAnalysis();
     updatePoundsFromGrams();
     updateMillimetersFromInches();
@@ -115,7 +117,20 @@
   }
 
   function updateMaterialDefaults() {
-    elements.tuningShaftDiameter.value = elements.tuningArrowMaterial.value === "bamboo_wood" ? "8" : "6";
+    var material = elements.tuningArrowMaterial.value;
+    if (material === "carbon") {
+      elements.tuningShaftDiameter.value = "6";
+      elements.tuningShaftInnerDiameter.value = "4.2";
+      elements.tuningShaftInnerDiameter.disabled = false;
+    } else if (material === "bamboo") {
+      elements.tuningShaftDiameter.value = "8";
+      elements.tuningShaftInnerDiameter.value = "4";
+      elements.tuningShaftInnerDiameter.disabled = false;
+    } else {
+      elements.tuningShaftDiameter.value = "8";
+      elements.tuningShaftInnerDiameter.value = "0";
+      elements.tuningShaftInnerDiameter.disabled = true;
+    }
   }
 
   function syncConversion(source, target, convert) {
@@ -267,6 +282,7 @@
         drawLengthIn: elements.tuningDrawLength.value,
         shaftLengthIn: elements.tuningShaftLength.value,
         shaftDiameterMm: elements.tuningShaftDiameter.value,
+        shaftInnerDiameterMm: elements.tuningShaftInnerDiameter.value,
         gripWidthMm: elements.tuningGripWidth.value,
         arrowPassOffsetMm: elements.tuningArrowPassOffset.value,
         bareArrowWeightGr: elements.tuningBareArrowWeight.value,
@@ -293,6 +309,10 @@
     addDefinitionRow(list, "器材", result.bowLabel + " / " + result.materialLabel);
     addDefinitionRow(list, "成品箭重 / GPP", formatNumber(result.finishedArrowWeightGr, 1) + " gr / " + formatNumber(result.gpp, 2));
     addDefinitionRow(list, "当前静态 Spine", "ATA " + result.ataSpine + "（静态测试位移 " + formatNumber(window.ArcherModel.ataSpineToMillimeters(result.ataSpine), 2) + " mm）");
+    addDefinitionRow(list, "箭杆截面", formatShaftSection(result.section));
+    addDefinitionRow(list, "截面惯性矩 I", formatNumber(result.section.secondMomentMm4, 2) + " mm⁴");
+    addDefinitionRow(list, "由 ATA 反算的 EI", formatScientific(result.section.flexuralRigidityNmm2) + " N·mm²");
+    addDefinitionRow(list, "等效弯曲模量", formatNumber(result.section.effectiveBendingModulusGpa, 1) + " GPa（几何核对值）");
     addDefinitionRow(list, "预测动态挠度", formatRange(result.current.dynamicDeflectionMinMm, result.current.dynamicDeflectionMaxMm, 1, "mm"));
     addDefinitionRow(list, "释放侧向等效力", formatNumber(result.current.lateralForceLb, 3) + " lb");
     addDefinitionRow(list, "出箭点中心线", formatNumber(result.arrowPassOffsetMm, 1) + " mm（" + offsetSourceLabel(result.offsetSource) + "）");
@@ -337,6 +357,19 @@
   function formatSpineRange(lowerIn, upperIn) {
     return "ATA " + Math.round(lowerIn * 1000) + "-" + Math.round(upperIn * 1000)
       + "（静态测试位移 " + formatNumber(lowerIn * 25.4, 2) + "-" + formatNumber(upperIn * 25.4, 2) + " mm）";
+  }
+
+  function formatShaftSection(section) {
+    if (section.sectionType === "solid") {
+      return "实心圆杆，直径 " + formatNumber(section.outerDiameterMm, 1) + " mm";
+    }
+    return "空心圆管，外径 " + formatNumber(section.outerDiameterMm, 1)
+      + " / 内径 " + formatNumber(section.innerDiameterMm, 1)
+      + " mm（壁厚 " + formatNumber(section.wallThicknessMm, 2) + " mm）";
+  }
+
+  function formatScientific(value) {
+    return Number(value.toPrecision(4)).toExponential(3).replace("e+", "e");
   }
 
   function formatRange(lower, upper, digits, unit) {
