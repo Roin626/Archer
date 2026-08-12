@@ -363,7 +363,9 @@
       + Math.round(window.ArcherModel.millimetersToAtaSpine(adjustment.targetDynamicMm))
       + "（" + formatNumber(adjustment.targetDynamicMm, 1) + " mm）");
     if (result.dynamicMatch && result.clearanceMatch) {
-      addDefinitionRow(list, "当前状态", "已满足基础动态范围和最低弓把避让；以下为核准值参考");
+      addDefinitionRow(list, "当前状态", result.dynamicMatchStatus === "overlap"
+        ? "当前动态区间与基础推荐范围部分重叠，并满足最低弓把避让；以下调整用于使区间下限达到偏硬侧核准值"
+        : "当前动态区间完整位于基础推荐范围内，并满足最低弓把避让；以下为核准值参考");
     }
     if (adjustment.targetPointWeightGr == null) {
       addDefinitionRow(list, "箭重方案", "即使箭头系统减至 0 gr 仍无法达到核准值，请改用更硬箭杆或参考理论箭长");
@@ -411,7 +413,8 @@
     if (result.dynamicMatchStatus === "too-stiff") return "动态挠度低于基础推荐下限，存在箭杆偏硬风险";
     if (result.clearanceStatus === "uncertain") return "动态范围跨越最低避让值，需实射验证";
     if (!result.staticMatch) return "静态挠度不在基础推荐区间，建议试相邻挠度";
-    return "满足基础动态范围和最低弓把避让";
+    if (result.dynamicMatchStatus === "overlap") return "当前动态区间与基础推荐范围部分重叠，并满足最低弓把避让";
+    return "当前动态区间完整位于基础推荐范围内，并满足最低弓把避让";
   }
 
   function clearanceSuffix(result, status) {
