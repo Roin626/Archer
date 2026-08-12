@@ -309,12 +309,7 @@
     addDefinitionRow(list, "器材", result.bowLabel + " / " + result.materialLabel);
     addDefinitionRow(list, "成品箭重 / GPP", formatNumber(result.finishedArrowWeightGr, 1) + " gr / " + formatNumber(result.gpp, 2));
     addDefinitionRow(list, "当前静态挠度", "ATA " + result.ataSpine + "（静态测试位移 " + formatNumber(window.ArcherModel.ataSpineToMillimeters(result.ataSpine), 2) + " mm）");
-    addDefinitionRow(list, "箭杆截面", formatShaftSection(result.section));
-    addDefinitionRow(list, "截面惯性矩 I", formatNumber(result.section.secondMomentMm4, 2) + " mm⁴");
-    addDefinitionRow(list, "由 ATA 反算的 EI", formatScientific(result.section.flexuralRigidityNmm2) + " N·mm²");
-    addDefinitionRow(list, "等效弯曲模量", formatNumber(result.section.effectiveBendingModulusGpa, 1) + " GPa（几何核对值）");
     addDefinitionRow(list, "预测动态挠度", formatDynamicDeflectionRange(result.current.dynamicDeflectionMinMm, result.current.dynamicDeflectionMaxMm));
-    addDefinitionRow(list, "释放侧向等效力", formatNumber(result.current.lateralForceLb, 3) + " lb");
     addDefinitionRow(list, "出箭点中心线", formatNumber(result.arrowPassOffsetMm, 1) + " mm（" + offsetSourceLabel(result.offsetSource) + "）");
     addDefinitionRow(list, "当前匹配", currentMatchLabel(result));
   }
@@ -380,19 +375,6 @@
     return "ATA 等效 " + Math.round(window.ArcherModel.millimetersToAtaSpine(lowerMm))
       + "-" + Math.round(window.ArcherModel.millimetersToAtaSpine(upperMm))
       + "（" + formatNumber(lowerMm, 1) + "-" + formatNumber(upperMm, 1) + " mm）";
-  }
-
-  function formatShaftSection(section) {
-    if (section.sectionType === "solid") {
-      return "实心圆杆，直径 " + formatNumber(section.outerDiameterMm, 1) + " mm";
-    }
-    return "空心圆管，外径 " + formatNumber(section.outerDiameterMm, 1)
-      + " / 内径 " + formatNumber(section.innerDiameterMm, 1)
-      + " mm（壁厚 " + formatNumber(section.wallThicknessMm, 2) + " mm）";
-  }
-
-  function formatScientific(value) {
-    return Number(value.toPrecision(4)).toExponential(3).replace("e+", "e");
   }
 
   function formatRange(lower, upper, digits, unit) {
