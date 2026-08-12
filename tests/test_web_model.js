@@ -3,14 +3,16 @@ const assert = require("node:assert/strict");
 global.window = global;
 require("../src/model.js");
 
-assert.equal(ArcherModel.gramsToPounds(453.59237), 1);
-assert.equal(ArcherModel.poundsToGrams(1), 453.59237);
+assert.equal(ArcherModel.grainsToGrams(1), 0.06479891);
+assert.equal(ArcherModel.gramsToGrains(0.06479891), 1);
+assert.equal(ArcherModel.kilogramsToPounds(0.45359237), 1);
+assert.equal(ArcherModel.poundsToKilograms(1), 0.45359237);
 assert.equal(ArcherModel.inchesToMillimeters(1), 25.4);
 assert.equal(ArcherModel.millimetersToInches(25.4), 1);
 assert.ok(Math.abs(ArcherModel.ataSpineToMillimeters(700) - 17.78) < 1e-9);
 assert.equal(Math.round(ArcherModel.millimetersToAtaSpine(17.78)), 700);
 assert.throws(function () {
-  ArcherModel.gramsToPounds("not-a-number");
+  ArcherModel.grainsToGrams("not-a-number");
 }, /有效数字/);
 
 const carbonSection = ArcherModel.calculateShaftSection({

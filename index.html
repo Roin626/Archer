@@ -165,9 +165,17 @@
           </div>
           <div class="converter-grid">
             <fieldset class="converter-group">
+              <legend>箭重</legend>
+              <div class="converter-row">
+                <label>格令（gr）<input id="grainsInput" type="number" step="any" value="100" inputmode="decimal"></label>
+                <span class="converter-symbol" aria-hidden="true">⇄</span>
+                <label>克（g）<input id="gramsInput" type="number" step="any" inputmode="decimal"></label>
+              </div>
+            </fieldset>
+            <fieldset class="converter-group">
               <legend>质量</legend>
               <div class="converter-row">
-                <label>克（g）<input id="gramsInput" type="number" step="any" value="100" inputmode="decimal"></label>
+                <label>千克（kg）<input id="kilogramsInput" type="number" step="any" value="1" inputmode="decimal"></label>
                 <span class="converter-symbol" aria-hidden="true">⇄</span>
                 <label>磅（lb）<input id="poundsInput" type="number" step="any" inputmode="decimal"></label>
               </div>
@@ -185,8 +193,8 @@
       </section>
     </main>
 
-    <script src="src/model.dynamic.js?v=10"></script>
+    <script src="src/model.dynamic.js?v=11"></script>
     <script src="src/storage.js"></script>
-    <script src="src/app.dynamic.js?v=10"></script>
+    <script src="src/app.dynamic.js?v=11"></script>
   </body>
 </html>

@@ -191,7 +191,8 @@
   var ATA_TEST_SPAN_IN = 28;
   var MM_PER_INCH = 25.4;
   var NEWTONS_PER_POUND_FORCE = 4.4482216152605;
-  var GRAMS_PER_POUND = 453.59237;
+  var KILOGRAMS_PER_POUND = 0.45359237;
+  var GRAMS_PER_GRAIN = 0.06479891;
   var handleClearanceMaterials = {
     carbon: {
       label: "碳箭杆",
@@ -290,12 +291,20 @@
     return number;
   }
 
-  function gramsToPounds(grams) {
-    return finiteNumber(grams, "克") / GRAMS_PER_POUND;
+  function grainsToGrams(grains) {
+    return finiteNumber(grains, "格令") * GRAMS_PER_GRAIN;
   }
 
-  function poundsToGrams(pounds) {
-    return finiteNumber(pounds, "磅") * GRAMS_PER_POUND;
+  function gramsToGrains(grams) {
+    return finiteNumber(grams, "克") / GRAMS_PER_GRAIN;
+  }
+
+  function kilogramsToPounds(kilograms) {
+    return finiteNumber(kilograms, "千克") / KILOGRAMS_PER_POUND;
+  }
+
+  function poundsToKilograms(pounds) {
+    return finiteNumber(pounds, "磅") * KILOGRAMS_PER_POUND;
   }
 
   function inchesToMillimeters(inches) {
@@ -1071,8 +1080,10 @@
     calculateStaticSpineScreening: calculateStaticSpineScreening,
     calculateHandleClearanceRanges: calculateHandleClearanceRanges,
     analyzeDynamicSpine: analyzeDynamicSpine,
-    gramsToPounds: gramsToPounds,
-    poundsToGrams: poundsToGrams,
+    grainsToGrams: grainsToGrams,
+    gramsToGrains: gramsToGrains,
+    kilogramsToPounds: kilogramsToPounds,
+    poundsToKilograms: poundsToKilograms,
     inchesToMillimeters: inchesToMillimeters,
     millimetersToInches: millimetersToInches,
     ataSpineToMillimeters: ataSpineToMillimeters,

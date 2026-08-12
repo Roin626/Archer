@@ -43,7 +43,9 @@
       currentDynamicSummary: document.getElementById("currentDynamicSummary"),
       recommendedSpineSummary: document.getElementById("recommendedSpineSummary"),
       fixedShaftSummary: document.getElementById("fixedShaftSummary"),
+      grainsInput: document.getElementById("grainsInput"),
       gramsInput: document.getElementById("gramsInput"),
+      kilogramsInput: document.getElementById("kilogramsInput"),
       poundsInput: document.getElementById("poundsInput"),
       inchesInput: document.getElementById("inchesInput"),
       millimetersInput: document.getElementById("millimetersInput")
@@ -55,7 +57,8 @@
     render();
     updateMaterialDefaults();
     renderDynamicSpineAnalysis();
-    updatePoundsFromGrams();
+    updateGramsFromGrains();
+    updatePoundsFromKilograms();
     updateMillimetersFromInches();
   }
 
@@ -94,18 +97,28 @@
 
     elements.tuningButton.addEventListener("click", renderDynamicSpineAnalysis);
     elements.tuningArrowMaterial.addEventListener("change", updateMaterialDefaults);
-    elements.gramsInput.addEventListener("input", updatePoundsFromGrams);
-    elements.poundsInput.addEventListener("input", updateGramsFromPounds);
+    elements.grainsInput.addEventListener("input", updateGramsFromGrains);
+    elements.gramsInput.addEventListener("input", updateGrainsFromGrams);
+    elements.kilogramsInput.addEventListener("input", updatePoundsFromKilograms);
+    elements.poundsInput.addEventListener("input", updateKilogramsFromPounds);
     elements.inchesInput.addEventListener("input", updateMillimetersFromInches);
     elements.millimetersInput.addEventListener("input", updateInchesFromMillimeters);
   }
 
-  function updatePoundsFromGrams() {
-    syncConversion(elements.gramsInput, elements.poundsInput, window.ArcherModel.gramsToPounds);
+  function updateGramsFromGrains() {
+    syncConversion(elements.grainsInput, elements.gramsInput, window.ArcherModel.grainsToGrams);
   }
 
-  function updateGramsFromPounds() {
-    syncConversion(elements.poundsInput, elements.gramsInput, window.ArcherModel.poundsToGrams);
+  function updateGrainsFromGrams() {
+    syncConversion(elements.gramsInput, elements.grainsInput, window.ArcherModel.gramsToGrains);
+  }
+
+  function updatePoundsFromKilograms() {
+    syncConversion(elements.kilogramsInput, elements.poundsInput, window.ArcherModel.kilogramsToPounds);
+  }
+
+  function updateKilogramsFromPounds() {
+    syncConversion(elements.poundsInput, elements.kilogramsInput, window.ArcherModel.poundsToKilograms);
   }
 
   function updateMillimetersFromInches() {
