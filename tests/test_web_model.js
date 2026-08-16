@@ -172,7 +172,7 @@ assert.equal(
   traditionalDynamic.recommendation.calibrationTargetMm,
   traditionalDynamic.recommendation.recommendedDynamicCenterMm
 );
-assert.equal(traditionalDynamic.dynamicMatchStatus, "near-calibration");
+assert.equal(traditionalDynamic.dynamicMatchStatus, "balanced");
 assert.equal(traditionalDynamic.dynamicMatch, true);
 assert.equal(traditionalDynamic.recommendation.calibrationTargetSource, "range-mean");
 assert.equal(
@@ -206,6 +206,35 @@ assert.ok(Math.abs(
 ) < 1e-6);
 assert.ok(Math.abs(traditionalDynamic.adjustments.targetPointWeightGr - 208.2983503211845) < 1e-9);
 assert.ok(Math.abs(traditionalDynamic.adjustments.targetShaftLengthIn - 31.0121002768936) < 1e-9);
+
+function assessTraditionalDynamicStatus(ataSpine) {
+  return ArcherModel.analyzeDynamicSpine({
+    bowType: "shelfless_traditional",
+    drawWeightLb: 30,
+    drawLengthIn: 28,
+    shaftLengthIn: 29,
+    bareArrowWeightGr: 190,
+    pointWeightGr: 100,
+    ataSpine: ataSpine,
+    arrowMaterial: "bamboo",
+    shaftDiameterMm: 8,
+    shaftInnerDiameterMm: 4,
+    gripWidthMm: 50
+  });
+}
+
+assert.deepEqual(
+  [300, 500, 700, 1000, 1500].map(function (ataSpine) {
+    return assessTraditionalDynamicStatus(ataSpine).dynamicMatchStatus;
+  }),
+  ["too-stiff", "stiff-side", "balanced", "soft-side", "too-soft"]
+);
+assert.deepEqual(
+  [300, 500, 700, 1000, 1500].map(function (ataSpine) {
+    return assessTraditionalDynamicStatus(ataSpine).dynamicMatch;
+  }),
+  [false, false, true, false, false]
+);
 
 const heavierPointSameScreening = ArcherModel.analyzeDynamicSpine({
   bowType: "shelfless_traditional",

@@ -365,7 +365,7 @@
       + Math.round(window.ArcherModel.millimetersToAtaSpine(adjustment.targetDynamicMm))
       + "（" + formatNumber(adjustment.targetDynamicMm, 1) + " mm）");
     if (result.dynamicMatch && result.clearanceMatch) {
-      addDefinitionRow(list, "当前状态", "预测动态区间包含推荐区间中间值，并满足最低弓把避让；以下调整以动态核准值为目标");
+      addDefinitionRow(list, "当前状态", "预测动态区间位于中间核准值至最大推荐值之间，并满足最低弓把避让；以下调整以动态核准值为目标");
     }
     if (adjustment.targetPointWeightGr == null) {
       addDefinitionRow(list, "箭重方案", "即使箭头系统减至 0 gr 仍无法达到核准值，请改用更硬箭杆或参考理论箭长");
@@ -409,11 +409,13 @@
   function currentMatchLabel(result) {
     if (result.recommendation.calibrationConflict) return "基础动态范围与最低弓把避让需求冲突，需复核配置";
     if (result.clearanceStatus === "insufficient") return "侧弯不足以避开弓把";
-    if (result.dynamicMatchStatus === "too-soft") return "预测动态区间高于中间值核准值，存在箭杆偏软倾向";
-    if (result.dynamicMatchStatus === "too-stiff") return "预测动态区间低于中间值核准值，存在箭杆偏硬倾向";
+    if (result.dynamicMatchStatus === "too-stiff") return "预测动态区间小于最低推荐值，存在箭杆过硬倾向";
+    if (result.dynamicMatchStatus === "stiff-side") return "预测动态区间部分适配，大于最低推荐值，但是低于中间核准值，存在箭杆偏硬倾向";
+    if (result.dynamicMatchStatus === "soft-side") return "预测动态区间部分适配，大于中间核准值，且大于最大推荐值，存在箭杆偏软倾向";
+    if (result.dynamicMatchStatus === "too-soft") return "预测动态区间大于最大推荐值，存在箭杆过软倾向";
     if (result.clearanceStatus === "uncertain") return "动态范围跨越最低避让值，需实射验证";
     if (!result.staticMatch) return "静态挠度不在基础推荐区间，建议试相邻挠度";
-    return "预测动态区间包含中间值核准值，并满足最低弓把避让";
+    return "预测动态区间大于中间核准值，且低于最大推荐值，箭杆挠度适中";
   }
 
   function clearanceSuffix(result, status) {

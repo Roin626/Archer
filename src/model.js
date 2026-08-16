@@ -537,9 +537,11 @@
   }
 
   function assessDynamicRecommendation(dynamicMinMm, dynamicMaxMm, recommendation) {
-    if (dynamicMaxMm < recommendation.calibrationTargetMm) return "too-stiff";
-    if (dynamicMinMm > recommendation.calibrationTargetMm) return "too-soft";
-    return "near-calibration";
+    if (dynamicMaxMm < recommendation.recommendedDynamicMinMm) return "too-stiff";
+    if (dynamicMaxMm < recommendation.calibrationTargetMm) return "stiff-side";
+    if (dynamicMinMm > recommendation.recommendedDynamicMaxMm) return "too-soft";
+    if (dynamicMaxMm > recommendation.recommendedDynamicMaxMm) return "soft-side";
+    return "balanced";
   }
 
   function calculateFixedShaftAdjustments(setup, response, recommendation) {
@@ -649,7 +651,7 @@
       recommendation
     );
     var clearanceMatch = clearanceStatus === "not-applicable" || clearanceStatus === "satisfied";
-    var dynamicMatch = dynamicMatchStatus === "near-calibration";
+    var dynamicMatch = dynamicMatchStatus === "balanced";
     return {
       bowType: setup.bowType,
       bowLabel: setup.profile.label,
