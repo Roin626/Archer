@@ -484,15 +484,15 @@
     var recommendedDynamicMaxMm = empiricalUpperIn * MM_PER_INCH
       * response.responseScale * setup.material.dynamicFactorMax;
     var recommendedDynamicCenterMm = (recommendedDynamicMinMm + recommendedDynamicMaxMm) / 2;
-    var adjustmentTargetMm = Math.max(
-      recommendedDynamicMinMm,
+    var calibrationTargetMm = Math.max(
+      recommendedDynamicCenterMm,
       requiredDynamicMinMm == null ? 0 : requiredDynamicMinMm
     );
-    var adjustmentTargetSource = requiredDynamicMinMm != null
-      && requiredDynamicMinMm > recommendedDynamicMinMm
+    var calibrationTargetSource = requiredDynamicMinMm != null
+      && requiredDynamicMinMm > recommendedDynamicCenterMm
       ? "clearance-floor"
-      : "range-lower-bound";
-    var calibrationConflict = adjustmentTargetMm > recommendedDynamicMaxMm;
+      : "range-mean";
+    var calibrationConflict = calibrationTargetMm > recommendedDynamicMaxMm;
     var lowerAta = Math.round(empiricalLowerIn * 1000);
     var upperAta = Math.round(empiricalUpperIn * 1000);
     var productAtaCandidates = COMMON_ATA_DEFLECTIONS.filter(function (value) {
@@ -518,9 +518,8 @@
       recommendedDynamicMinMm: recommendedDynamicMinMm,
       recommendedDynamicMaxMm: recommendedDynamicMaxMm,
       recommendedDynamicCenterMm: recommendedDynamicCenterMm,
-      calibrationTargetMm: recommendedDynamicCenterMm,
-      adjustmentTargetMm: adjustmentTargetMm,
-      adjustmentTargetSource: adjustmentTargetSource,
+      calibrationTargetMm: calibrationTargetMm,
+      calibrationTargetSource: calibrationTargetSource,
       calibrationConflict: calibrationConflict,
       screeningPointWeightGr: 100,
       woodSpinePoundsMin: setup.materialKey !== "wood" ? null : 26 / empiricalUpperIn,
@@ -546,7 +545,7 @@
   function calculateFixedShaftAdjustments(setup, response, recommendation) {
     var targetDynamicMm = recommendation.calibrationConflict
       ? null
-      : recommendation.adjustmentTargetMm;
+      : recommendation.calibrationTargetMm;
 
     function responseAtPoint(pointWeightGr) {
       return calculateDynamicResponse(setup, {
