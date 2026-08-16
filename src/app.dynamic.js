@@ -343,7 +343,9 @@
     if (recommendation.calibrationConflict) {
       addDefinitionRow(list, "核准结果", "最低弓把避让需求高于基础推荐动态上限，请复核中心线尺寸并试相邻箭杆");
     } else {
-      addDefinitionRow(list, "偏硬侧动态核准值", "ATA 等效 "
+      addDefinitionRow(list, recommendation.calibrationTargetSource === "clearance-floor"
+        ? "动态核准值（最低避让约束）"
+        : "动态核准值（推荐区间均值）", "ATA 等效 "
         + Math.round(window.ArcherModel.millimetersToAtaSpine(recommendation.calibrationTargetMm))
         + "（" + formatNumber(recommendation.calibrationTargetMm, 1) + " mm）");
     }
@@ -359,12 +361,12 @@
       addDefinitionRow(list, "调整目标", "基础推荐动态范围与最低弓把避让需求冲突，暂不生成调整值");
       return;
     }
-    addDefinitionRow(list, "调整目标", "使预测动态挠度下限接近偏硬侧核准值：ATA 等效 "
+    addDefinitionRow(list, "调整目标", "使预测动态挠度下限接近动态核准值：ATA 等效 "
       + Math.round(window.ArcherModel.millimetersToAtaSpine(adjustment.targetDynamicMm))
       + "（" + formatNumber(adjustment.targetDynamicMm, 1) + " mm）");
     if (result.dynamicMatch && result.clearanceMatch) {
       addDefinitionRow(list, "当前状态", result.dynamicMatchStatus === "overlap"
-        ? "当前动态区间与基础推荐范围部分重叠，并满足最低弓把避让；以下调整用于使区间下限达到偏硬侧核准值"
+        ? "当前动态区间与基础推荐范围部分重叠，并满足最低弓把避让；以下调整用于使区间下限达到动态核准值"
         : "当前动态区间完整位于基础推荐范围内，并满足最低弓把避让；以下为核准值参考");
     }
     if (adjustment.targetPointWeightGr == null) {

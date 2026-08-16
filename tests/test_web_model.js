@@ -163,8 +163,20 @@ assert.equal(traditionalDynamic.adjustments.pointClearanceStatus, "satisfied");
 assert.equal(traditionalDynamic.adjustments.lengthClearanceStatus, "satisfied");
 assert.equal(traditionalDynamic.section.sectionType, "hollow");
 assert.equal(traditionalDynamic.adjustments.targetSource, "equipment-screening");
-assert.equal(traditionalDynamic.adjustments.targetDynamicMm, 29);
-assert.equal(traditionalDynamic.recommendation.calibrationTargetMm, 29);
+assert.ok(Math.abs(
+  traditionalDynamic.recommendation.recommendedDynamicCenterMm
+    - (traditionalDynamic.recommendation.recommendedDynamicMinMm
+      + traditionalDynamic.recommendation.recommendedDynamicMaxMm) / 2
+) < 1e-9);
+assert.equal(
+  traditionalDynamic.recommendation.calibrationTargetMm,
+  traditionalDynamic.recommendation.recommendedDynamicCenterMm
+);
+assert.equal(traditionalDynamic.recommendation.calibrationTargetSource, "range-mean");
+assert.equal(
+  traditionalDynamic.adjustments.targetDynamicMm,
+  traditionalDynamic.recommendation.calibrationTargetMm
+);
 assert.equal(traditionalDynamic.recommendation.calibrationConflict, false);
 assert.equal(
   traditionalDynamic.adjustments.targetDynamicMinMm,
@@ -182,8 +194,14 @@ assert.ok(
   traditionalDynamic.adjustments.lengthDynamicMaxMm >= traditionalDynamic.adjustments.targetDynamicMinMm
     && traditionalDynamic.adjustments.lengthDynamicMinMm <= traditionalDynamic.adjustments.targetDynamicMaxMm
 );
-assert.ok(Math.abs(traditionalDynamic.adjustments.pointDynamicMinMm - 29) < 1e-6);
-assert.ok(Math.abs(traditionalDynamic.adjustments.lengthDynamicMinMm - 29) < 1e-6);
+assert.ok(Math.abs(
+  traditionalDynamic.adjustments.pointDynamicMinMm
+    - traditionalDynamic.recommendation.calibrationTargetMm
+) < 1e-6);
+assert.ok(Math.abs(
+  traditionalDynamic.adjustments.lengthDynamicMinMm
+    - traditionalDynamic.recommendation.calibrationTargetMm
+) < 1e-6);
 
 const heavierPointSameScreening = ArcherModel.analyzeDynamicSpine({
   bowType: "shelfless_traditional",
@@ -221,6 +239,7 @@ const conflictingClearance = ArcherModel.analyzeDynamicSpine({
   gripWidthMm: 120
 });
 assert.equal(conflictingClearance.recommendation.calibrationConflict, true);
+assert.equal(conflictingClearance.recommendation.calibrationTargetSource, "clearance-floor");
 assert.equal(conflictingClearance.adjustments.targetDynamicMm, null);
 assert.equal(conflictingClearance.adjustments.targetPointWeightGr, null);
 assert.equal(conflictingClearance.adjustments.targetShaftLengthIn, null);

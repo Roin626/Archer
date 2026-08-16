@@ -483,10 +483,15 @@
       * response.responseScale * setup.material.dynamicFactorMin;
     var recommendedDynamicMaxMm = empiricalUpperIn * MM_PER_INCH
       * response.responseScale * setup.material.dynamicFactorMax;
+    var recommendedDynamicCenterMm = (recommendedDynamicMinMm + recommendedDynamicMaxMm) / 2;
     var calibrationTargetMm = Math.max(
-      recommendedDynamicMinMm,
+      recommendedDynamicCenterMm,
       requiredDynamicMinMm == null ? 0 : requiredDynamicMinMm
     );
+    var calibrationTargetSource = requiredDynamicMinMm != null
+      && requiredDynamicMinMm > recommendedDynamicCenterMm
+      ? "clearance-floor"
+      : "range-mean";
     var calibrationConflict = calibrationTargetMm > recommendedDynamicMaxMm;
     var lowerAta = Math.round(empiricalLowerIn * 1000);
     var upperAta = Math.round(empiricalUpperIn * 1000);
@@ -512,7 +517,9 @@
       productAtaCandidates: productAtaCandidates,
       recommendedDynamicMinMm: recommendedDynamicMinMm,
       recommendedDynamicMaxMm: recommendedDynamicMaxMm,
+      recommendedDynamicCenterMm: recommendedDynamicCenterMm,
       calibrationTargetMm: calibrationTargetMm,
+      calibrationTargetSource: calibrationTargetSource,
       calibrationConflict: calibrationConflict,
       screeningPointWeightGr: 100,
       woodSpinePoundsMin: setup.materialKey !== "wood" ? null : 26 / empiricalUpperIn,
