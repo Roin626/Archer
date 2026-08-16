@@ -343,9 +343,7 @@
     if (recommendation.calibrationConflict) {
       addDefinitionRow(list, "核准结果", "最低弓把避让需求高于基础推荐动态上限，请复核中心线尺寸并试相邻箭杆");
     } else {
-      addDefinitionRow(list, recommendation.calibrationTargetSource === "clearance-floor"
-        ? "动态核准值（最低避让约束）"
-        : "动态核准值（推荐区间均值）", "ATA 等效 "
+      addDefinitionRow(list, "动态核准值（推荐区间均值）", "ATA 等效 "
         + Math.round(window.ArcherModel.millimetersToAtaSpine(recommendation.calibrationTargetMm))
         + "（" + formatNumber(recommendation.calibrationTargetMm, 1) + " mm）");
     }
@@ -361,13 +359,11 @@
       addDefinitionRow(list, "调整目标", "基础推荐动态范围与最低弓把避让需求冲突，暂不生成调整值");
       return;
     }
-    addDefinitionRow(list, "调整目标", "使预测动态挠度下限接近动态核准值：ATA 等效 "
+    addDefinitionRow(list, "调整计算参考", "沿用原计算，使预测动态挠度下限接近推荐下限或最低避让值：ATA 等效 "
       + Math.round(window.ArcherModel.millimetersToAtaSpine(adjustment.targetDynamicMm))
       + "（" + formatNumber(adjustment.targetDynamicMm, 1) + " mm）");
     if (result.dynamicMatch && result.clearanceMatch) {
-      addDefinitionRow(list, "当前状态", result.dynamicMatchStatus === "overlap"
-        ? "当前动态区间与基础推荐范围部分重叠，并满足最低弓把避让；以下调整用于使区间下限达到动态核准值"
-        : "当前动态区间完整位于基础推荐范围内，并满足最低弓把避让；以下为核准值参考");
+      addDefinitionRow(list, "当前状态", "预测动态区间包含推荐区间中间值，并满足最低弓把避让；以下调整值沿用原有计算");
     }
     if (adjustment.targetPointWeightGr == null) {
       addDefinitionRow(list, "箭重方案", "即使箭头系统减至 0 gr 仍无法达到核准值，请改用更硬箭杆或参考理论箭长");
@@ -411,12 +407,11 @@
   function currentMatchLabel(result) {
     if (result.recommendation.calibrationConflict) return "基础动态范围与最低弓把避让需求冲突，需复核配置";
     if (result.clearanceStatus === "insufficient") return "侧弯不足以避开弓把";
-    if (result.dynamicMatchStatus === "too-soft") return "动态挠度超过基础推荐上限，存在箭杆偏软风险";
-    if (result.dynamicMatchStatus === "too-stiff") return "动态挠度低于基础推荐下限，存在箭杆偏硬风险";
+    if (result.dynamicMatchStatus === "too-soft") return "预测动态区间高于中间值核准值，存在箭杆偏软倾向";
+    if (result.dynamicMatchStatus === "too-stiff") return "预测动态区间低于中间值核准值，存在箭杆偏硬倾向";
     if (result.clearanceStatus === "uncertain") return "动态范围跨越最低避让值，需实射验证";
     if (!result.staticMatch) return "静态挠度不在基础推荐区间，建议试相邻挠度";
-    if (result.dynamicMatchStatus === "overlap") return "当前动态区间与基础推荐范围部分重叠，并满足最低弓把避让";
-    return "当前动态区间完整位于基础推荐范围内，并满足最低弓把避让";
+    return "预测动态区间包含中间值核准值，并满足最低弓把避让";
   }
 
   function clearanceSuffix(result, status) {

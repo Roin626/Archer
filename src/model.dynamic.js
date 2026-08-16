@@ -484,15 +484,15 @@
     var recommendedDynamicMaxMm = empiricalUpperIn * MM_PER_INCH
       * response.responseScale * setup.material.dynamicFactorMax;
     var recommendedDynamicCenterMm = (recommendedDynamicMinMm + recommendedDynamicMaxMm) / 2;
-    var calibrationTargetMm = Math.max(
-      recommendedDynamicCenterMm,
+    var adjustmentTargetMm = Math.max(
+      recommendedDynamicMinMm,
       requiredDynamicMinMm == null ? 0 : requiredDynamicMinMm
     );
-    var calibrationTargetSource = requiredDynamicMinMm != null
-      && requiredDynamicMinMm > recommendedDynamicCenterMm
+    var adjustmentTargetSource = requiredDynamicMinMm != null
+      && requiredDynamicMinMm > recommendedDynamicMinMm
       ? "clearance-floor"
-      : "range-mean";
-    var calibrationConflict = calibrationTargetMm > recommendedDynamicMaxMm;
+      : "range-lower-bound";
+    var calibrationConflict = adjustmentTargetMm > recommendedDynamicMaxMm;
     var lowerAta = Math.round(empiricalLowerIn * 1000);
     var upperAta = Math.round(empiricalUpperIn * 1000);
     var productAtaCandidates = COMMON_ATA_DEFLECTIONS.filter(function (value) {
@@ -518,8 +518,9 @@
       recommendedDynamicMinMm: recommendedDynamicMinMm,
       recommendedDynamicMaxMm: recommendedDynamicMaxMm,
       recommendedDynamicCenterMm: recommendedDynamicCenterMm,
-      calibrationTargetMm: calibrationTargetMm,
-      calibrationTargetSource: calibrationTargetSource,
+      calibrationTargetMm: recommendedDynamicCenterMm,
+      adjustmentTargetMm: adjustmentTargetMm,
+      adjustmentTargetSource: adjustmentTargetSource,
       calibrationConflict: calibrationConflict,
       screeningPointWeightGr: 100,
       woodSpinePoundsMin: setup.materialKey !== "wood" ? null : 26 / empiricalUpperIn,
@@ -537,17 +538,15 @@
   }
 
   function assessDynamicRecommendation(dynamicMinMm, dynamicMaxMm, recommendation) {
-    if (dynamicMaxMm < recommendation.recommendedDynamicMinMm) return "too-stiff";
-    if (dynamicMinMm > recommendation.recommendedDynamicMaxMm) return "too-soft";
-    if (dynamicMinMm >= recommendation.recommendedDynamicMinMm
-      && dynamicMaxMm <= recommendation.recommendedDynamicMaxMm) return "within";
-    return "overlap";
+    if (dynamicMaxMm < recommendation.calibrationTargetMm) return "too-stiff";
+    if (dynamicMinMm > recommendation.calibrationTargetMm) return "too-soft";
+    return "near-calibration";
   }
 
   function calculateFixedShaftAdjustments(setup, response, recommendation) {
     var targetDynamicMm = recommendation.calibrationConflict
       ? null
-      : recommendation.calibrationTargetMm;
+      : recommendation.adjustmentTargetMm;
 
     function responseAtPoint(pointWeightGr) {
       return calculateDynamicResponse(setup, {
@@ -651,7 +650,7 @@
       recommendation
     );
     var clearanceMatch = clearanceStatus === "not-applicable" || clearanceStatus === "satisfied";
-    var dynamicMatch = dynamicMatchStatus === "within" || dynamicMatchStatus === "overlap";
+    var dynamicMatch = dynamicMatchStatus === "near-calibration";
     return {
       bowType: setup.bowType,
       bowLabel: setup.profile.label,

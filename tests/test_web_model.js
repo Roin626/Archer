@@ -172,11 +172,14 @@ assert.equal(
   traditionalDynamic.recommendation.calibrationTargetMm,
   traditionalDynamic.recommendation.recommendedDynamicCenterMm
 );
-assert.equal(traditionalDynamic.recommendation.calibrationTargetSource, "range-mean");
+assert.equal(traditionalDynamic.dynamicMatchStatus, "near-calibration");
+assert.equal(traditionalDynamic.dynamicMatch, true);
+assert.equal(traditionalDynamic.recommendation.adjustmentTargetSource, "clearance-floor");
 assert.equal(
   traditionalDynamic.adjustments.targetDynamicMm,
-  traditionalDynamic.recommendation.calibrationTargetMm
+  traditionalDynamic.recommendation.adjustmentTargetMm
 );
+assert.equal(traditionalDynamic.adjustments.targetDynamicMm, 29);
 assert.equal(traditionalDynamic.recommendation.calibrationConflict, false);
 assert.equal(
   traditionalDynamic.adjustments.targetDynamicMinMm,
@@ -196,12 +199,14 @@ assert.ok(
 );
 assert.ok(Math.abs(
   traditionalDynamic.adjustments.pointDynamicMinMm
-    - traditionalDynamic.recommendation.calibrationTargetMm
+    - traditionalDynamic.recommendation.adjustmentTargetMm
 ) < 1e-6);
 assert.ok(Math.abs(
   traditionalDynamic.adjustments.lengthDynamicMinMm
-    - traditionalDynamic.recommendation.calibrationTargetMm
+    - traditionalDynamic.recommendation.adjustmentTargetMm
 ) < 1e-6);
+assert.ok(Math.abs(traditionalDynamic.adjustments.targetPointWeightGr - 192.88428969284752) < 1e-9);
+assert.ok(Math.abs(traditionalDynamic.adjustments.targetShaftLengthIn - 30.762545271440736) < 1e-9);
 
 const heavierPointSameScreening = ArcherModel.analyzeDynamicSpine({
   bowType: "shelfless_traditional",
@@ -239,7 +244,7 @@ const conflictingClearance = ArcherModel.analyzeDynamicSpine({
   gripWidthMm: 120
 });
 assert.equal(conflictingClearance.recommendation.calibrationConflict, true);
-assert.equal(conflictingClearance.recommendation.calibrationTargetSource, "clearance-floor");
+assert.equal(conflictingClearance.recommendation.adjustmentTargetSource, "clearance-floor");
 assert.equal(conflictingClearance.adjustments.targetDynamicMm, null);
 assert.equal(conflictingClearance.adjustments.targetPointWeightGr, null);
 assert.equal(conflictingClearance.adjustments.targetShaftLengthIn, null);
