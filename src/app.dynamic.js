@@ -132,8 +132,8 @@
   function updateMaterialDefaults() {
     var material = elements.tuningArrowMaterial.value;
     if (material === "carbon") {
-      elements.tuningShaftDiameter.value = "6";
-      elements.tuningShaftInnerDiameter.value = "4.2";
+      elements.tuningShaftDiameter.value = "7.1";
+      elements.tuningShaftInnerDiameter.value = "6.2";
       elements.tuningShaftInnerDiameter.disabled = false;
     } else if (material === "bamboo") {
       elements.tuningShaftDiameter.value = "8";
