@@ -200,6 +200,32 @@ for a given static spine. The current catalogue contains Sonic 6.0 data for ATA
 next to matching candidates but are not substituted for the user's measured
 bare-arrow weight.
 
+## Front component geometry
+
+The front-component selector is a geometry and compatibility aid. It has one
+active type at a time, so a common point seat and an internal point cannot be
+selected together. The entered point-system weight remains the value used by
+the dynamic model. Selecting a listed component prefills its nominal weight,
+but a later manual change is retained and reported as a difference.
+
+For direct and internal points, inserted length is calculated as total length
+minus exposed length. Assembled arrow length is shaft length plus exposed point
+length. For a common point seat, the supplied full length is treated as its
+approximate occupied length inside the shaft; assembled length is not reported
+because the exposed length of the separately fitted point is unknown.
+
+Inserted component length is not subtracted from dynamic shaft length. The
+component's diameter, material and bending stiffness are not known, while the
+measured ATA value describes the full shaft. Treating every inserted segment as
+a rigid shortening would overstate shaft stiffness. The component dimensions
+therefore provide fit and overall-length information without changing the
+existing dynamic-response formula.
+
+The 6.2 mm-ID wind-cut point table checks the user-supplied fit list for 7.1 mm
+and 7.4 mm shaft outside diameters, carbon construction and listed ATA sizes.
+These point dimensions and fit lists are product-specific reference data, not
+an ATA or Easton universal standard.
+
 ## References
 
 - ASTM F2031, Standard Test Method for Measurement of Arrow Shaft Static Spine

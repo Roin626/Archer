@@ -28,6 +28,7 @@
       csvButton: document.getElementById("csvButton"),
       tuningBowType: document.getElementById("tuningBowType"),
       tuningArrowMaterial: document.getElementById("tuningArrowMaterial"),
+      tuningCarbonConstruction: document.getElementById("tuningCarbonConstruction"),
       tuningDrawWeight: document.getElementById("tuningDrawWeight"),
       tuningDrawLength: document.getElementById("tuningDrawLength"),
       tuningShaftLength: document.getElementById("tuningShaftLength"),
@@ -37,6 +38,8 @@
       tuningArrowPassOffset: document.getElementById("tuningArrowPassOffset"),
       tuningBareArrowWeight: document.getElementById("tuningBareArrowWeight"),
       tuningPointWeight: document.getElementById("tuningPointWeight"),
+      tuningFrontComponentType: document.getElementById("tuningFrontComponentType"),
+      tuningFrontComponentWeight: document.getElementById("tuningFrontComponentWeight"),
       tuningAtaSpine: document.getElementById("tuningAtaSpine"),
       tuningButton: document.getElementById("tuningButton"),
       tuningError: document.getElementById("tuningError"),
@@ -56,6 +59,7 @@
     writeForm(session);
     render();
     updateMaterialDefaults();
+    updateFrontComponentOptions(false);
     renderDynamicSpineAnalysis();
     updateGramsFromGrains();
     updatePoundsFromKilograms();
@@ -97,6 +101,10 @@
 
     elements.tuningButton.addEventListener("click", renderDynamicSpineAnalysis);
     elements.tuningArrowMaterial.addEventListener("change", updateMaterialDefaults);
+    elements.tuningFrontComponentType.addEventListener("change", function () {
+      updateFrontComponentOptions(true);
+    });
+    elements.tuningFrontComponentWeight.addEventListener("change", syncPointWeightFromComponent);
     elements.grainsInput.addEventListener("input", updateGramsFromGrains);
     elements.gramsInput.addEventListener("input", updateGrainsFromGrams);
     elements.kilogramsInput.addEventListener("input", updatePoundsFromKilograms);
@@ -131,6 +139,7 @@
 
   function updateMaterialDefaults() {
     var material = elements.tuningArrowMaterial.value;
+    elements.tuningCarbonConstruction.disabled = material !== "carbon";
     if (material === "carbon") {
       elements.tuningShaftDiameter.value = "7.1";
       elements.tuningShaftInnerDiameter.value = "6.2";
@@ -143,6 +152,41 @@
       elements.tuningShaftDiameter.value = "8";
       elements.tuningShaftInnerDiameter.value = "0";
       elements.tuningShaftInnerDiameter.disabled = true;
+    }
+  }
+
+  function updateFrontComponentOptions(syncWeight) {
+    var catalog = window.ArcherModel.getFrontComponentOptions(elements.tuningFrontComponentType.value);
+    elements.tuningFrontComponentWeight.innerHTML = "";
+    if (!catalog.options.length) {
+      var manualOption = document.createElement("option");
+      manualOption.value = "";
+      manualOption.textContent = "使用手动箭头系统重量";
+      elements.tuningFrontComponentWeight.appendChild(manualOption);
+      elements.tuningFrontComponentWeight.disabled = true;
+      return;
+    }
+    catalog.options.forEach(function (option) {
+      var node = document.createElement("option");
+      node.value = option.weightGr;
+      node.textContent = formatFrontComponentOption(catalog.type, option);
+      elements.tuningFrontComponentWeight.appendChild(node);
+    });
+    elements.tuningFrontComponentWeight.disabled = false;
+    if (syncWeight) syncPointWeightFromComponent();
+  }
+
+  function formatFrontComponentOption(type, option) {
+    if (type === "point_seat") {
+      return option.weightGr + " gr / 占杆约 " + option.insertedLengthMm + " mm";
+    }
+    return option.weightGr + " gr / 总长 " + option.totalLengthMm
+      + " mm / 外露 " + option.exposedLengthMm + " mm";
+  }
+
+  function syncPointWeightFromComponent() {
+    if (elements.tuningFrontComponentWeight.value !== "") {
+      elements.tuningPointWeight.value = elements.tuningFrontComponentWeight.value;
     }
   }
 
@@ -291,6 +335,7 @@
       var result = window.ArcherModel.analyzeDynamicSpine({
         bowType: elements.tuningBowType.value,
         arrowMaterial: elements.tuningArrowMaterial.value,
+        carbonConstruction: elements.tuningCarbonConstruction.value,
         drawWeightLb: elements.tuningDrawWeight.value,
         drawLengthIn: elements.tuningDrawLength.value,
         shaftLengthIn: elements.tuningShaftLength.value,
@@ -300,6 +345,8 @@
         arrowPassOffsetMm: elements.tuningArrowPassOffset.value,
         bareArrowWeightGr: elements.tuningBareArrowWeight.value,
         pointWeightGr: elements.tuningPointWeight.value,
+        frontComponentType: elements.tuningFrontComponentType.value,
+        frontComponentWeightGr: elements.tuningFrontComponentWeight.value,
         ataSpine: elements.tuningAtaSpine.value
       });
       elements.tuningError.textContent = "";
@@ -324,7 +371,38 @@
     addDefinitionRow(list, "当前静态挠度", "ATA " + result.ataSpine + "（静态测试位移 " + formatNumber(window.ArcherModel.ataSpineToMillimeters(result.ataSpine), 2) + " mm）");
     addDefinitionRow(list, "预测动态挠度", formatDynamicDeflectionRange(result.current.dynamicDeflectionMinMm, result.current.dynamicDeflectionMaxMm));
     addDefinitionRow(list, "出箭点中心线", formatNumber(result.arrowPassOffsetMm, 1) + " mm（" + offsetSourceLabel(result.offsetSource) + "）");
+    renderFrontComponent(result);
     addDefinitionRow(list, "当前匹配", currentMatchLabel(result));
+  }
+
+  function renderFrontComponent(result) {
+    var component = result.frontComponent;
+    if (!component) return;
+    var constructionLabel = result.carbonConstruction === "3k" ? "3K 纯碳箭杆" : "纯碳箭杆";
+    addDefinitionRow(elements.currentDynamicSummary, "前端组件", component.label + " / " + component.nominalWeightGr + " gr");
+    if (component.type === "point_seat") {
+      addDefinitionRow(elements.currentDynamicSummary, "组件占杆长度", formatNumber(component.insertedLengthMm, 2) + " mm（按给出的箭头座全长近似；不含另装箭头外露长度）");
+    } else {
+      addDefinitionRow(elements.currentDynamicSummary, "组件尺寸", "插入 " + formatNumber(component.insertedLengthMm, 2)
+        + " mm / 外露 " + formatNumber(component.exposedLengthMm, 2)
+        + " mm / 总长 " + formatNumber(component.totalLengthMm, 2) + " mm");
+      addDefinitionRow(elements.currentDynamicSummary, "装配后箭全长", formatNumber(component.assembledArrowLengthMm, 1)
+        + " mm（" + formatNumber(window.ArcherModel.millimetersToInches(component.assembledArrowLengthMm), 2) + " in）");
+    }
+    if (!component.nominalWeightMatches) {
+      addDefinitionRow(elements.currentDynamicSummary, "组件重量核对", "箭头系统输入为 "
+        + formatNumber(component.pointSystemWeightGr, 1) + " gr，与组件标称重量相差 "
+        + signedNumber(component.weightDifferenceGr, 1) + " gr；动态计算采用输入总重");
+    }
+    if (component.compatibility.checked) {
+      var compatibility = component.compatibility;
+      var allowed = compatibility.allowedAtaSpines.length
+        ? "；该组合推荐 ATA " + compatibility.allowedAtaSpines.join("、")
+        : "";
+      addDefinitionRow(elements.currentDynamicSummary, "破风箭头适配", compatibility.compatible
+        ? "尺寸与 " + constructionLabel + " ATA " + result.ataSpine + " 适配" + allowed
+        : compatibility.reasons.join("；") + allowed);
+    }
   }
 
   function renderDynamicRecommendation(result) {
