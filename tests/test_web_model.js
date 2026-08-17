@@ -62,7 +62,7 @@ const initial = ArcherModel.estimateBareShaftSpine({
   arrowPassOffsetMm: 0
 });
 
-assert.equal(initial.centerAtaSpine, 632);
+assert.equal(initial.centerAtaSpine, 700);
 assert.equal(initial.shaftClearanceIn, 1);
 
 const clearance = ArcherModel.calculateHandleClearanceRanges({
@@ -110,14 +110,12 @@ const centerShot = ArcherModel.analyzeDynamicSpine({
 assert.equal(centerShot.recommendation.hasClearanceConstraint, false);
 assert.ok(centerShot.current.dynamicDeflectionMinMm > 10);
 assert.ok(centerShot.current.dynamicDeflectionMaxMm > centerShot.current.dynamicDeflectionMinMm);
-assert.equal(Math.round(centerShot.recommendation.finalLowerIn * 1000), 537);
-assert.equal(Math.round(centerShot.recommendation.finalUpperIn * 1000), 727);
-assert.deepEqual(centerShot.recommendation.productAtaCandidates, [600, 700, 750, 800]);
-assert.equal(centerShot.recommendation.goldTipChartAtaSpine, 600);
-assert.deepEqual(
-  [centerShot.recommendation.eastonChartRange.lowerAtaSpine, centerShot.recommendation.eastonChartRange.upperAtaSpine],
-  [700, 800]
-);
+assert.equal(centerShot.current.offsetAdjustmentLb, 0);
+assert.equal(Math.round(centerShot.recommendation.finalLowerIn * 1000), 595);
+assert.equal(Math.round(centerShot.recommendation.finalUpperIn * 1000), 805);
+assert.deepEqual(centerShot.recommendation.productAtaCandidates, [600, 650, 700, 750, 800]);
+assert.equal(centerShot.recommendation.goldTipChartAtaSpine, undefined);
+assert.equal(centerShot.recommendation.eastonChartRange, undefined);
 assert.equal(centerShot.overallMatch, true);
 
 const sameSpineThickerWall = ArcherModel.analyzeDynamicSpine({
@@ -159,79 +157,71 @@ const americanHighPound = ArcherModel.analyzeDynamicSpine(Object.assign(
 ));
 assert.equal(americanHighPound.arrowPassOffsetMm, 0);
 assert.equal(americanHighPound.offsetSource, "manual");
-assert.equal(americanHighPound.recommendation.goldTipChartAtaSpine, 400);
-assert.deepEqual(americanHighPound.recommendation.productAtaCandidates, [400]);
+assert.equal(americanHighPound.current.offsetAdjustmentLb, 0);
+assert.deepEqual(americanHighPound.recommendation.productAtaCandidates, [450, 500]);
 assert.equal(americanHighPound.recommendation.vendorChartReference, undefined);
 assert.equal(americanHighPound.recommendation.eastonGpiReferences, undefined);
 
-assert.deepEqual(
-  [
-    { drawWeightLb: 58, shaftLengthIn: 30 },
-    { drawWeightLb: 62, shaftLengthIn: 32 },
-    { drawWeightLb: 78, shaftLengthIn: 32 }
-  ].map(function (condition) {
-    return ArcherModel.analyzeDynamicSpine(Object.assign({}, americanHighPoundInput, condition, {
-      arrowPassOffsetMm: 0
-    })).recommendation.goldTipChartAtaSpine;
-  }),
-  [400, 400, 340]
+const americanMeasuredOffset = ArcherModel.analyzeDynamicSpine(Object.assign(
+  { arrowPassOffsetMm: 12 },
+  americanHighPoundInput
+));
+assert.equal(
+  americanMeasuredOffset.current.effectiveDrawWeightLb,
+  americanHighPound.current.effectiveDrawWeightLb
+);
+assert.ok(
+  americanMeasuredOffset.current.dynamicDeflectionMinMm
+    > americanHighPound.current.dynamicDeflectionMinMm
+);
+assert.equal(
+  americanMeasuredOffset.recommendation.empiricalCenterIn,
+  americanHighPound.recommendation.empiricalCenterIn
+);
+assert.equal(americanMeasuredOffset.recommendation.requiredDynamicMinMm, 15.55);
+
+const barebowSameRelease = ArcherModel.analyzeDynamicSpine(Object.assign(
+  {},
+  americanHighPoundInput,
+  { bowType: "barebow", arrowPassOffsetMm: 12 }
+));
+assert.equal(
+  barebowSameRelease.current.dynamicDeflectionMinMm,
+  americanMeasuredOffset.current.dynamicDeflectionMinMm
 );
 
-const overlengthGoldTipRecommendation = ArcherModel.analyzeDynamicSpine(Object.assign(
-  {},
-  americanHighPoundInput,
-  { shaftLengthIn: 33, arrowPassOffsetMm: 0 }
-)).recommendation;
-assert.equal(overlengthGoldTipRecommendation.goldTipChartAtaSpine, 400);
-assert.equal(overlengthGoldTipRecommendation.eastonChartRange.chartLengthIn, 28);
-assert.deepEqual(overlengthGoldTipRecommendation.productAtaCandidates, [400]);
-
-const longerDrawGoldTipRecommendation = ArcherModel.analyzeDynamicSpine(Object.assign(
-  {},
-  americanHighPoundInput,
-  { drawWeightLb: 30, drawLengthIn: 30, shaftLengthIn: 33, arrowPassOffsetMm: 0 }
-)).recommendation;
-assert.equal(longerDrawGoldTipRecommendation.goldTipChartAtaSpine, 500);
-
-const heavierPointGoldTipRecommendation = ArcherModel.analyzeDynamicSpine(Object.assign(
-  {},
-  centerShot,
+const sameBasicRecommendationInputs = [
   {
-    bowType: "olympic_recurve",
+    bowType: "barebow", shaftLengthIn: 29, bareArrowWeightGr: 170,
+    pointWeightGr: 100, arrowPassOffsetMm: 0
+  },
+  {
+    bowType: "american_hunting", shaftLengthIn: 33, bareArrowWeightGr: 320,
+    pointWeightGr: 200, arrowPassOffsetMm: 9
+  },
+  {
+    bowType: "shelfless_traditional", shaftLengthIn: 35, bareArrowWeightGr: 400,
+    pointWeightGr: 300, arrowPassOffsetMm: 25
+  }
+];
+sameBasicRecommendationInputs.forEach(function (variation) {
+  var result = ArcherModel.analyzeDynamicSpine(Object.assign({
     drawWeightLb: 30,
     drawLengthIn: 28,
-    shaftLengthIn: 29,
-    bareArrowWeightGr: 170,
-    pointWeightGr: 150,
     ataSpine: 700,
     arrowMaterial: "carbon",
-    shaftDiameterMm: 6,
-    shaftInnerDiameterMm: 4.2,
-    arrowPassOffsetMm: 0
-  }
-)).recommendation;
-assert.equal(heavierPointGoldTipRecommendation.goldTipChartAtaSpine, 500);
-assert.equal(heavierPointGoldTipRecommendation.eastonChartRange.adjustedDrawWeightLb, 36);
+    shaftDiameterMm: 7.1,
+    shaftInnerDiameterMm: 6.2
+  }, variation));
+  assert.equal(result.recommendation.empiricalLowerIn, centerShot.recommendation.empiricalLowerIn);
+  assert.equal(result.recommendation.empiricalUpperIn, centerShot.recommendation.empiricalUpperIn);
+});
 
-const lowPoundEastonSupplement = ArcherModel.analyzeDynamicSpine({
-  bowType: "olympic_recurve",
-  drawWeightLb: 20,
-  drawLengthIn: 24,
-  shaftLengthIn: 25,
-  bareArrowWeightGr: 140,
-  pointWeightGr: 100,
-  ataSpine: 1400,
-  arrowMaterial: "carbon",
-  shaftDiameterMm: 6,
-  shaftInnerDiameterMm: 4.2,
-  arrowPassOffsetMm: 0
-}).recommendation;
-assert.equal(lowPoundEastonSupplement.goldTipChartAtaSpine, null);
-assert.deepEqual(
-  [lowPoundEastonSupplement.eastonChartRange.lowerAtaSpine, lowPoundEastonSupplement.eastonChartRange.upperAtaSpine],
-  [1700, 1800]
-);
-assert.deepEqual(lowPoundEastonSupplement.productAtaCandidates, [1800]);
+const longerDrawRecommendation = ArcherModel.analyzeDynamicSpine(Object.assign({}, centerShot, {
+  drawLengthIn: 30,
+  shaftLengthIn: 31
+})).recommendation;
+assert.ok(longerDrawRecommendation.empiricalCenterIn < centerShot.recommendation.empiricalCenterIn);
 
 const traditionalDynamic = ArcherModel.analyzeDynamicSpine({
   bowType: "shelfless_traditional",
@@ -252,11 +242,11 @@ assert.deepEqual(
   [traditionalDynamic.recommendation.requiredDynamicMinMm, traditionalDynamic.recommendation.requiredDynamicMaxMm],
   [29, undefined]
 );
-assert.equal(Math.round(traditionalDynamic.recommendation.finalLowerIn * 1000), 578);
-assert.equal(Math.round(traditionalDynamic.recommendation.finalUpperIn * 1000), 867);
+assert.equal(Math.round(traditionalDynamic.recommendation.finalLowerIn * 1000), 595);
+assert.equal(Math.round(traditionalDynamic.recommendation.finalUpperIn * 1000), 805);
 assert.equal(traditionalDynamic.recommendation.clearanceLowerIn, undefined);
-assert.deepEqual(traditionalDynamic.recommendation.productAtaCandidates, [600, 700, 750, 800]);
-assert.equal(traditionalDynamic.recommendation.goldTipChartAtaSpine, 600);
+assert.deepEqual(traditionalDynamic.recommendation.productAtaCandidates, [600, 650, 700, 750, 800]);
+assert.equal(traditionalDynamic.current.offsetAdjustmentLb, 0);
 assert.ok(traditionalDynamic.adjustments.targetPointWeightGr > 100);
 assert.equal(traditionalDynamic.adjustments.pointClearancePass, true);
 assert.equal(traditionalDynamic.clearanceStatus, "uncertain");
@@ -272,11 +262,11 @@ assert.ok(Math.abs(
 ) < 1e-9);
 assert.equal(
   traditionalDynamic.recommendation.calibrationTargetMm,
-  traditionalDynamic.recommendation.recommendedDynamicCenterMm
+  traditionalDynamic.recommendation.requiredDynamicMinMm
 );
 assert.equal(traditionalDynamic.dynamicMatchStatus, "balanced");
 assert.equal(traditionalDynamic.dynamicMatch, true);
-assert.equal(traditionalDynamic.recommendation.calibrationTargetSource, "range-mean");
+assert.equal(traditionalDynamic.recommendation.calibrationTargetSource, "clearance-floor");
 assert.equal(
   traditionalDynamic.adjustments.targetDynamicMm,
   traditionalDynamic.recommendation.calibrationTargetMm
@@ -306,8 +296,8 @@ assert.ok(Math.abs(
   traditionalDynamic.adjustments.lengthDynamicMinMm
     - traditionalDynamic.recommendation.calibrationTargetMm
 ) < 1e-6);
-assert.ok(Math.abs(traditionalDynamic.adjustments.targetPointWeightGr - 208.2983503211845) < 1e-9);
-assert.ok(Math.abs(traditionalDynamic.adjustments.targetShaftLengthIn - 31.0121002768936) < 1e-9);
+assert.ok(Math.abs(traditionalDynamic.adjustments.targetPointWeightGr - 227.34748403101042) < 1e-9);
+assert.ok(Math.abs(traditionalDynamic.adjustments.targetShaftLengthIn - 31.307509011763667) < 1e-9);
 
 function assessTraditionalDynamicStatus(ataSpine) {
   return ArcherModel.analyzeDynamicSpine({
@@ -389,7 +379,7 @@ const adjustment = ArcherModel.recommendPointWeightAdjustment({
 });
 
 assert.equal(adjustment.targetPointWeightGr, 125);
-assert.equal(adjustment.targetAtaSpine, 732);
+assert.equal(adjustment.targetAtaSpine, 800);
 
 assert.throws(function () {
   ArcherModel.analyzeDynamicSpine({

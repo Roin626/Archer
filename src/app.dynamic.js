@@ -330,12 +330,10 @@
   function renderDynamicRecommendation(result) {
     var list = elements.recommendedSpineSummary;
     var recommendation = result.recommendation;
-    addDefinitionRow(list, "基础裸箭挠度推荐（100 gr 基准）", formatSpineRange(recommendation.empiricalLowerIn, recommendation.empiricalUpperIn));
+    addDefinitionRow(list, "基础裸箭挠度推荐（仅按拉重与拉距）", formatSpineRange(recommendation.empiricalLowerIn, recommendation.empiricalUpperIn));
     addDefinitionRow(list, "常见成品挠度候选", recommendation.productAtaCandidates.map(function (value) {
-      return "ATA " + value + (value === recommendation.goldTipChartAtaSpine ? "（Gold Tip 表）" : "");
-    }).join("、") + (recommendation.eastonChartRange
-      ? "（含 Easton 补充区间，购买前核对厂商规格）"
-      : "（购买前核对厂商规格）"));
+      return "ATA " + value;
+    }).join("、") + "（购买前核对厂商规格）");
     if (recommendation.hasClearanceConstraint) {
       addDefinitionRow(list, "避开弓把最低动态侧移", "≥ " + formatNumber(recommendation.requiredDynamicMinMm, 1) + " mm");
     } else {
@@ -404,7 +402,7 @@
 
   function offsetSourceLabel(source) {
     if (source === "grip-width-half") return "弓把宽度的一半";
-    if (source === "bow-default") return "弓型默认";
+    if (source === "center-shot-default") return "未填写，按中心出箭 0 mm";
     return "实测输入";
   }
 
