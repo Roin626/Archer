@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "status": "awaiting-brace-height-speed-and-mass-measurements",
+  "sharedInputs": {
+    "bowType": "shelfless_traditional",
+    "drawWeightLb": 30,
+    "drawLengthIn": 28,
+    "shaftLengthIn": 32,
+    "arrowPassOffsetMm": 10,
+    "braceHeightMm": null,
+    "arrowSpeedMps": null,
+    "bareArrowWeightGr": null,
+    "shaftDiameterMm": null
+  },
+  "cases": [
+    {
+      "id": "ata600-point200",
+      "ataSpine": 600,
+      "pointWeightGr": 200,
+      "observedOutcome": "contact"
+    },
+    {
+      "id": "ata600-point300",
+      "ataSpine": 600,
+      "pointWeightGr": 300,
+      "observedOutcome": "near-minimum-clearance"
+    },
+    {
+      "id": "ata800-point200",
+      "ataSpine": 800,
+      "pointWeightGr": 200,
+      "observedOutcome": "intermittent-contact"
+    },
+    {
+      "id": "ata800-point300",
+      "ataSpine": 800,
+      "pointWeightGr": 300,
+      "observedOutcome": "better-clearance"
+    }
+  ]
+}
