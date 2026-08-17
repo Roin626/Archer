@@ -112,7 +112,8 @@ assert.ok(centerShot.current.dynamicDeflectionMinMm > 10);
 assert.ok(centerShot.current.dynamicDeflectionMaxMm > centerShot.current.dynamicDeflectionMinMm);
 assert.equal(Math.round(centerShot.recommendation.finalLowerIn * 1000), 537);
 assert.equal(Math.round(centerShot.recommendation.finalUpperIn * 1000), 727);
-assert.deepEqual(centerShot.recommendation.productAtaCandidates, [550, 600, 650, 700]);
+assert.deepEqual(centerShot.recommendation.productAtaCandidates, [500, 550, 600, 650, 700]);
+assert.equal(centerShot.recommendation.goldTipChartAtaSpine, 500);
 assert.equal(centerShot.overallMatch, true);
 
 const sameSpineThickerWall = ArcherModel.analyzeDynamicSpine({
@@ -154,18 +155,10 @@ const americanHighPound = ArcherModel.analyzeDynamicSpine(Object.assign(
 ));
 assert.equal(americanHighPound.arrowPassOffsetMm, 0);
 assert.equal(americanHighPound.offsetSource, "manual");
-assert.equal(americanHighPound.recommendation.vendorChartReference.ataSpine, 340);
-assert.equal(americanHighPound.recommendation.vendorChartReference.source, "victory-recurve-2024");
-assert.equal(americanHighPound.recommendation.vendorChartReference.chartLengthIn, 30);
-assert.deepEqual(
-  americanHighPound.recommendation.eastonGpiReferences.filter(function (reference) {
-    return reference.ataSpine === 340;
-  }),
-  [
-    { product: "Sonic 6.0", ataSpine: 340, gpi: 7.8, stockLengthIn: 31.5, source: "easton-official" },
-    { product: "Carbon Legacy", ataSpine: 340, gpi: 10.1, stockLengthIn: 34, source: "easton-official" }
-  ]
-);
+assert.equal(americanHighPound.recommendation.goldTipChartAtaSpine, 340);
+assert.ok(americanHighPound.recommendation.productAtaCandidates.indexOf(340) !== -1);
+assert.equal(americanHighPound.recommendation.vendorChartReference, undefined);
+assert.equal(americanHighPound.recommendation.eastonGpiReferences, undefined);
 
 assert.deepEqual(
   [
@@ -175,19 +168,18 @@ assert.deepEqual(
   ].map(function (condition) {
     return ArcherModel.analyzeDynamicSpine(Object.assign({}, americanHighPoundInput, condition, {
       arrowPassOffsetMm: 0
-    })).recommendation.vendorChartReference.ataSpine;
+    })).recommendation.goldTipChartAtaSpine;
   }),
   [340, 300, 250]
 );
 
-const overlengthVendorReference = ArcherModel.analyzeDynamicSpine(Object.assign(
+const overlengthGoldTipRecommendation = ArcherModel.analyzeDynamicSpine(Object.assign(
   {},
   americanHighPoundInput,
   { shaftLengthIn: 33, arrowPassOffsetMm: 0 }
-)).recommendation.vendorChartReference;
-assert.equal(overlengthVendorReference.ataSpine, 340);
-assert.equal(overlengthVendorReference.chartLengthIn, 32);
-assert.equal(overlengthVendorReference.lengthExceedsChart, true);
+)).recommendation;
+assert.equal(overlengthGoldTipRecommendation.goldTipChartAtaSpine, 340);
+assert.ok(overlengthGoldTipRecommendation.productAtaCandidates.indexOf(340) !== -1);
 
 const traditionalDynamic = ArcherModel.analyzeDynamicSpine({
   bowType: "shelfless_traditional",
@@ -211,7 +203,8 @@ assert.deepEqual(
 assert.equal(Math.round(traditionalDynamic.recommendation.finalLowerIn * 1000), 578);
 assert.equal(Math.round(traditionalDynamic.recommendation.finalUpperIn * 1000), 867);
 assert.equal(traditionalDynamic.recommendation.clearanceLowerIn, undefined);
-assert.deepEqual(traditionalDynamic.recommendation.productAtaCandidates, [600, 650, 700, 750, 800]);
+assert.deepEqual(traditionalDynamic.recommendation.productAtaCandidates, [500, 600, 650, 700, 750, 800]);
+assert.equal(traditionalDynamic.recommendation.goldTipChartAtaSpine, 500);
 assert.ok(traditionalDynamic.adjustments.targetPointWeightGr > 100);
 assert.equal(traditionalDynamic.adjustments.pointClearancePass, true);
 assert.equal(traditionalDynamic.clearanceStatus, "uncertain");

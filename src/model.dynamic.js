@@ -187,9 +187,9 @@
     200, 250, 300, 340, 350, 400, 450, 500, 550, 600, 650, 700,
     750, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1800, 2000
   ];
-  var VICTORY_RECURVE_CHART_LENGTHS_IN = [25, 26, 27, 28, 29, 30, 31, 32];
-  var VICTORY_RECURVE_CHART_POINT_WEIGHTS_GR = [100, 125, 150];
-  var VICTORY_RECURVE_CHART_ROWS = [
+  var GOLD_TIP_RECURVE_CHART_LENGTHS_IN = [25, 26, 27, 28, 29, 30, 31, 32];
+  var GOLD_TIP_RECURVE_CHART_POINT_WEIGHTS_GR = [100, 125, 150];
+  var GOLD_TIP_RECURVE_CHART_ROWS = [
     { weightBands: { 100: [30, 34], 125: [30, 34] }, spines: [700, 600, 600, 600, 500, 500, 500, 400] },
     { weightBands: { 100: [35, 39], 125: [35, 39], 150: [30, 34] }, spines: [600, 600, 600, 500, 500, 500, 400, 400] },
     { weightBands: { 100: [40, 44], 125: [40, 44], 150: [35, 39] }, spines: [600, 600, 500, 500, 500, 400, 400, 400] },
@@ -289,51 +289,30 @@
     });
   }
 
-  function lookupVictoryRecurveChart(bowType, drawWeightLb, shaftLengthIn, pointWeightGr) {
-    if (["olympic_recurve", "barebow", "american_hunting"].indexOf(bowType) === -1) return null;
-    if (shaftLengthIn < VICTORY_RECURVE_CHART_LENGTHS_IN[0]) return null;
-    var pointColumnGr = nearestValue(VICTORY_RECURVE_CHART_POINT_WEIGHTS_GR, pointWeightGr);
-    var row = VICTORY_RECURVE_CHART_ROWS.find(function (candidate) {
+  function lookupGoldTipRecurveChart(bowType, drawWeightLb, shaftLengthIn, pointWeightGr) {
+    if (["olympic_recurve", "barebow", "american_hunting", "shelfless_traditional"].indexOf(bowType) === -1) return null;
+    if (shaftLengthIn < GOLD_TIP_RECURVE_CHART_LENGTHS_IN[0]) return null;
+    var pointColumnGr = nearestValue(GOLD_TIP_RECURVE_CHART_POINT_WEIGHTS_GR, pointWeightGr);
+    var row = GOLD_TIP_RECURVE_CHART_ROWS.find(function (candidate) {
       var band = candidate.weightBands[pointColumnGr];
       return band && drawWeightLb >= band[0] && drawWeightLb <= band[1];
     });
     if (!row) return null;
     var chartLengthIn = Math.min(
-      VICTORY_RECURVE_CHART_LENGTHS_IN[VICTORY_RECURVE_CHART_LENGTHS_IN.length - 1],
-      Math.max(VICTORY_RECURVE_CHART_LENGTHS_IN[0], Math.round(shaftLengthIn))
+      GOLD_TIP_RECURVE_CHART_LENGTHS_IN[GOLD_TIP_RECURVE_CHART_LENGTHS_IN.length - 1],
+      Math.max(GOLD_TIP_RECURVE_CHART_LENGTHS_IN[0], Math.round(shaftLengthIn))
     );
-    var lengthIndex = VICTORY_RECURVE_CHART_LENGTHS_IN.indexOf(chartLengthIn);
+    var lengthIndex = GOLD_TIP_RECURVE_CHART_LENGTHS_IN.indexOf(chartLengthIn);
     return {
       ataSpine: row.spines[lengthIndex],
-      source: "victory-recurve-2024",
+      source: "gold-tip-recurve",
       chartLengthIn: chartLengthIn,
       actualShaftLengthIn: Number(shaftLengthIn.toFixed(2)),
       pointWeightColumnGr: pointColumnGr,
       actualPointWeightGr: Number(pointWeightGr.toFixed(1)),
-      lengthExceedsChart: shaftLengthIn > VICTORY_RECURVE_CHART_LENGTHS_IN[VICTORY_RECURVE_CHART_LENGTHS_IN.length - 1],
+      lengthExceedsChart: shaftLengthIn > GOLD_TIP_RECURVE_CHART_LENGTHS_IN[GOLD_TIP_RECURVE_CHART_LENGTHS_IN.length - 1],
       pointWeightApproximated: pointWeightGr !== pointColumnGr
     };
-  }
-
-  function buildEastonGpiReferences(spines) {
-    var uniqueSpines = spines.filter(function (spine, index, values) {
-      return values.indexOf(spine) === index;
-    });
-    var references = [];
-    EASTON_SHAFT_REFERENCES.forEach(function (product) {
-      uniqueSpines.forEach(function (spine) {
-        var specification = product.spines[spine];
-        if (!specification) return;
-        references.push({
-          product: product.product,
-          ataSpine: spine,
-          gpi: specification.gpi,
-          stockLengthIn: specification.stockLengthIn,
-          source: "easton-official"
-        });
-      });
-    });
-    return references;
   }
 
   function parseNumberList(raw) {
@@ -602,14 +581,16 @@
         return Math.abs(value - centerAta) < Math.abs(closest - centerAta) ? value : closest;
       })];
     }
-    var vendorChartReference = lookupVictoryRecurveChart(
+    var goldTipChartReference = lookupGoldTipRecurveChart(
       setup.bowType,
       setup.drawWeightLb,
       setup.shaftLengthIn,
       setup.pointWeightGr
     );
-    var referenceSpines = productAtaCandidates.slice();
-    if (vendorChartReference) referenceSpines.push(vendorChartReference.ataSpine);
+    if (goldTipChartReference && productAtaCandidates.indexOf(goldTipChartReference.ataSpine) === -1) {
+      productAtaCandidates.push(goldTipChartReference.ataSpine);
+      productAtaCandidates.sort(function (left, right) { return left - right; });
+    }
 
     return {
       empiricalCenterIn: centerDeflectionIn,
@@ -621,8 +602,7 @@
       finalUpperIn: empiricalUpperIn,
       finalCenterIn: centerDeflectionIn,
       productAtaCandidates: productAtaCandidates,
-      vendorChartReference: vendorChartReference,
-      eastonGpiReferences: buildEastonGpiReferences(referenceSpines),
+      goldTipChartAtaSpine: goldTipChartReference == null ? null : goldTipChartReference.ataSpine,
       recommendedDynamicMinMm: recommendedDynamicMinMm,
       recommendedDynamicMaxMm: recommendedDynamicMaxMm,
       recommendedDynamicCenterMm: recommendedDynamicCenterMm,

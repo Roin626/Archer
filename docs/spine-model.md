@@ -187,18 +187,17 @@ shaft length shorter than the entered pivot-point draw distance.
 
 ## Manufacturer reference data
 
-The web interface keeps manufacturer data separate from the generic model.
-The Victory Archery 2024 recurve chart covers 30-84 lb draw weights, 25-32 inch
-shaft lengths and 100/125/150 gr point columns. Its result is shown as an
-independent cross-check. A shaft longer than 32 inches uses the 32-inch column
-only as a "no softer than" boundary; the application does not extrapolate
-beyond the chart.
+The Gold Tip recurve chart covers 30-84 lb draw weights, 25-32 inch chart
+lengths and 100/125/150 gr total point-system columns. Its result is merged
+into the common finished-shaft candidates instead of being shown as a separate
+technical result. A length above 32 inches uses the 32-inch column internally;
+the application does not extrapolate beyond the chart.
 
-Easton GPI values are product-specific weight references, not universal values
-for a given static spine. The current catalogue contains Sonic 6.0 data for ATA
-250-600 and Carbon Legacy data for ATA 340-700. These GPI values are displayed
-next to matching candidates but are not substituted for the user's measured
-bare-arrow weight.
+Easton GPI values are product-specific internal weight references, not
+universal values for a given static spine. The current catalogue contains
+Sonic 6.0 data for ATA 250-600 and Carbon Legacy data for ATA 340-700. GPI is
+not displayed as a recommendation. The user's measured bare-arrow weight stays
+authoritative because no specific Easton product is selected in this form.
 
 ## References
 
@@ -219,5 +218,3 @@ bare-arrow weight.
   https://eastonarchery.com/arrows_/sonic-arrow-6-0/
 - Easton Carbon Legacy product specifications and GPI table:
   https://eastonarchery.com/arrows_/carbon-legacy/
-- Victory Archery Arrow Guide and 2024 recurve spine chart:
-  https://victoryarchery.com/arrow-guide/
