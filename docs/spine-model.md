@@ -82,25 +82,24 @@ length `L`, bare-arrow mass, point-system mass, ATA static spine, outer diameter
 inner diameter for hollow shafts, material, and arrow-pass centerline offset `e`. For a shelfless bow, entering
 grip width makes `e = grip width / 2`.
 
-The current dynamic response uses the measured setup directly. Each 25 gr
-point-system change is treated as a 3 lb demand change:
+The setup demand is calibrated to the same 100 gr point convention used by the
+Easton chart. Each 25 gr point-system change is treated as a 3 lb demand change:
 
 ```text
 point_adjustment = (point_mass_gr - 100) / 25 * 3 lb
-effective_draw = max(5, F + point_adjustment) * sqrt(D / 28)
+offset_adjustment = (reference_offset - measured_offset) * 0.25 lb/mm
+effective_draw = max(5, F + point_adjustment + offset_adjustment) * sqrt(D / 28)
 ```
 
-The square-root draw-distance term is a project assumption and does not claim
-to reproduce a full bow force-draw curve. There is no bow-type reference-offset
-correction. The measured centerline offset is used only in the lateral geometry
-and handle-clearance requirement.
+The square-root draw-distance term and offset adjustment are project
+assumptions. They expose draw distance and non-center geometry without claiming
+to reproduce a full bow force-draw curve.
 
 Center-shot equipment still receives a non-zero release excitation. The model
 uses a bow-specific release fraction plus the geometric offset term:
 
 ```text
 lateral_fraction = release_fraction + (e_mm / 25.4) / D
-reference_arrow_mass = 9 GPP * measured_draw_weight
 inertia_factor = clamp(sqrt(reference_arrow_mass / actual_arrow_mass), 0.7, 1.3)
 F_side = effective_draw * lateral_fraction * inertia_factor
 R = (F_side / 1.94) * (L / 28)^3
@@ -125,23 +124,17 @@ Material transient bounds remain:
 | Laminated bamboo, hollow | 8 mm | 3 mm | 1.3-1.7 |
 | Wood, solid | 8 mm | 3 mm | 1.3-1.7 |
 
-The basic bare-shaft screening recommendation uses only measured draw weight
-and measured draw length:
+The basic bare-shaft screening recommendation is calculated as:
 
 ```text
-recommended_static_center = 0.700
-                          * (30 / measured_draw_weight)^0.6
-                          * (28 / measured_draw_length)^3
-recommended_static_range = center +/- 15%
+recommended_static = bow_baseline
+                   * (30 / effective_draw)^0.6
+                   * (L / 30)^3
 ```
 
-The 30 lb / 28 in reference produces an ATA 700 center. A longer measured draw
-length recommends a stiffer static shaft because the longer working-length
-proxy increases dynamic bending. Bow type, shaft length, arrow mass, point mass,
-material and centerline offset do not change this basic purchasing range.
-
-For any non-zero centerline offset, the calculator separately derives the
-required dynamic deflection for handle clearance:
+Each bow type has its own baseline and screening band. For any non-zero
+centerline offset, the calculator separately derives the required dynamic
+deflection for handle clearance:
 
 ```text
 C_min = e_mm + shaft_diameter / 2
@@ -154,14 +147,17 @@ shafts. The interface also lists common nominal ATA values that fall inside
 that range; these are generic candidates and must be checked against the actual
 manufacturer catalogue.
 
-Handle clearance is a one-sided minimum shown only in millimeters because it is
-a geometric displacement threshold, not an ATA static specification. The
-calculator does not infer an excessive-deflection limit from handle geometry.
+The basic screening calculation uses a fixed 100 gr point-system reference so
+the purchase target does not move when a point-weight adjustment is fed back
+into the calculator. Handle clearance is a one-sided minimum shown only in
+millimeters because it is a geometric displacement threshold, not an ATA
+static specification. The calculator does not infer an excessive-deflection
+limit from handle geometry.
 
 The hard-side dynamic calibration target is:
 
 ```text
-T = max(mean(basic_dynamic_min, basic_dynamic_max), handle_clearance_min)
+T = max(basic_dynamic_min, handle_clearance_min)
 ```
 
 If `T` exceeds `basic_dynamic_max`, the two constraints conflict and adjustment
@@ -191,12 +187,30 @@ shaft length shorter than the entered pivot-point draw distance.
 
 ## Manufacturer reference data
 
-No manufacturer selection chart is merged into the common finished-shaft
-candidates. Those candidates are common ATA sizes inside the basic draw-weight
-and draw-length range. Easton, Victory, Gold Tip and other manufacturer charts
-will be presented separately only after their input definitions and display
-workflow are finalized. Product-specific GPI is not used as a universal value
-for a static spine.
+The Gold Tip recurve chart covers 30-84 lb draw weights, 25-32 inch chart
+columns and 100/125/150 gr total point-system columns. In this application its
+horizontal axis is mapped to measured draw length, following the practical
+selection convention used by this calculator. Values outside the published
+25-32 inch range are not clamped to an edge column. The Gold Tip result is
+merged into the common finished-shaft candidates.
+
+The Easton target recurve matrix supplements the published Gold Tip limits. It
+covers measured-length proxy columns from 21-34 inches and recurve draw-weight
+bands from below 20 through 73 lb. Point-system weight adjusts the lookup demand
+by 3 lb per 25 gr away from the 100 gr baseline. Easton's source chart labels
+its horizontal axis as carbon-arrow cut length; this application intentionally
+uses measured draw length only as a purchase-screening proxy, not as an exact
+Easton product fit claim. Common manufactured ATA sizes inside the returned
+Easton range are merged and de-duplicated with the Gold Tip result. When either
+manufacturer chart covers the entered setup, these chart candidates take
+priority in the finished-shaft list. The generic model candidates are used only
+when neither chart covers the setup.
+
+Easton GPI values are product-specific internal weight references, not
+universal values for a given static spine. The current catalogue contains
+Sonic 6.0 data for ATA 250-600 and Carbon Legacy data for ATA 340-700. GPI is
+not displayed as a recommendation. The user's measured bare-arrow weight stays
+authoritative because no specific Easton product is selected in this form.
 
 ## References
 
