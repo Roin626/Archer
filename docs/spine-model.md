@@ -188,10 +188,23 @@ shaft length shorter than the entered pivot-point draw distance.
 ## Manufacturer reference data
 
 The Gold Tip recurve chart covers 30-84 lb draw weights, 25-32 inch chart
-lengths and 100/125/150 gr total point-system columns. Its result is merged
-into the common finished-shaft candidates instead of being shown as a separate
-technical result. A length above 32 inches uses the 32-inch column internally;
-the application does not extrapolate beyond the chart.
+columns and 100/125/150 gr total point-system columns. In this application its
+horizontal axis is mapped to measured draw length, following the practical
+selection convention used by this calculator. Values outside the published
+25-32 inch range are not clamped to an edge column. The Gold Tip result is
+merged into the common finished-shaft candidates.
+
+The Easton target recurve matrix supplements the published Gold Tip limits. It
+covers measured-length proxy columns from 21-34 inches and recurve draw-weight
+bands from below 20 through 73 lb. Point-system weight adjusts the lookup demand
+by 3 lb per 25 gr away from the 100 gr baseline. Easton's source chart labels
+its horizontal axis as carbon-arrow cut length; this application intentionally
+uses measured draw length only as a purchase-screening proxy, not as an exact
+Easton product fit claim. Common manufactured ATA sizes inside the returned
+Easton range are merged and de-duplicated with the Gold Tip result. When either
+manufacturer chart covers the entered setup, these chart candidates take
+priority in the finished-shaft list. The generic model candidates are used only
+when neither chart covers the setup.
 
 Easton GPI values are product-specific internal weight references, not
 universal values for a given static spine. The current catalogue contains

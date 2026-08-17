@@ -202,6 +202,16 @@
     { weightBands: { 100: [75, 79], 125: [75, 79], 150: [70, 74] }, spines: [400, 340, 340, 340, 300, 300, 300, 250] },
     { weightBands: { 100: [80, 84], 125: [80, 84], 150: [75, 79] }, spines: [340, 340, 300, 300, 250, 250, 250, 250] }
   ];
+  var EASTON_RECURVE_CHART_LENGTHS_IN = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34];
+  var EASTON_RECURVE_DRAW_WEIGHT_UPPER_BOUNDS_LB = [20, 26, 31, 35, 39, 43, 47, 52, 57, 62, 67, 73];
+  var EASTON_RECURVE_SPINE_RANGE_SEQUENCE = [
+    [2000, 2000], [1800, 2000], [1700, 1800], [1400, 1750],
+    [1200, 1450], [1050, 1250], [880, 1080], [750, 900],
+    [700, 800], [625, 720], [600, 675], [570, 640],
+    [500, 575], [450, 525], [400, 475], [370, 440],
+    [340, 400], [310, 370], [300, 340], [250, 300],
+    [200, 250], [150, 200]
+  ];
   var EASTON_SHAFT_REFERENCES = [
     {
       product: "Sonic 6.0",
@@ -289,30 +299,70 @@
     });
   }
 
-  function lookupGoldTipRecurveChart(bowType, drawWeightLb, shaftLengthIn, pointWeightGr) {
+  function lookupGoldTipRecurveChart(bowType, drawWeightLb, drawLengthIn, pointWeightGr) {
     if (["olympic_recurve", "barebow", "american_hunting", "shelfless_traditional"].indexOf(bowType) === -1) return null;
-    if (shaftLengthIn < GOLD_TIP_RECURVE_CHART_LENGTHS_IN[0]) return null;
+    var chartLengthIn = Math.round(drawLengthIn);
+    if (GOLD_TIP_RECURVE_CHART_LENGTHS_IN.indexOf(chartLengthIn) === -1) return null;
     var pointColumnGr = nearestValue(GOLD_TIP_RECURVE_CHART_POINT_WEIGHTS_GR, pointWeightGr);
     var row = GOLD_TIP_RECURVE_CHART_ROWS.find(function (candidate) {
       var band = candidate.weightBands[pointColumnGr];
       return band && drawWeightLb >= band[0] && drawWeightLb <= band[1];
     });
     if (!row) return null;
-    var chartLengthIn = Math.min(
-      GOLD_TIP_RECURVE_CHART_LENGTHS_IN[GOLD_TIP_RECURVE_CHART_LENGTHS_IN.length - 1],
-      Math.max(GOLD_TIP_RECURVE_CHART_LENGTHS_IN[0], Math.round(shaftLengthIn))
-    );
     var lengthIndex = GOLD_TIP_RECURVE_CHART_LENGTHS_IN.indexOf(chartLengthIn);
     return {
       ataSpine: row.spines[lengthIndex],
       source: "gold-tip-recurve",
       chartLengthIn: chartLengthIn,
-      actualShaftLengthIn: Number(shaftLengthIn.toFixed(2)),
+      actualDrawLengthIn: Number(drawLengthIn.toFixed(2)),
       pointWeightColumnGr: pointColumnGr,
       actualPointWeightGr: Number(pointWeightGr.toFixed(1)),
-      lengthExceedsChart: shaftLengthIn > GOLD_TIP_RECURVE_CHART_LENGTHS_IN[GOLD_TIP_RECURVE_CHART_LENGTHS_IN.length - 1],
       pointWeightApproximated: pointWeightGr !== pointColumnGr
     };
+  }
+
+  function lookupEastonRecurveRange(bowType, drawWeightLb, drawLengthIn, pointWeightGr) {
+    if (["olympic_recurve", "barebow", "american_hunting", "shelfless_traditional"].indexOf(bowType) === -1) return null;
+    var chartLengthIn = Math.round(drawLengthIn);
+    var lengthIndex = EASTON_RECURVE_CHART_LENGTHS_IN.indexOf(chartLengthIn);
+    if (lengthIndex === -1) return null;
+    var adjustedDrawWeightLb = drawWeightLb
+      + (pointWeightGr - 100) / ARROW_WEIGHT_STEP_GR * EFFECTIVE_DRAW_PER_ARROW_WEIGHT_STEP_LB;
+    var weightIndex = EASTON_RECURVE_DRAW_WEIGHT_UPPER_BOUNDS_LB.findIndex(function (upperBound) {
+      return adjustedDrawWeightLb <= upperBound;
+    });
+    if (weightIndex === -1) return null;
+    var rangeIndex = clamp(
+      weightIndex + lengthIndex - 1,
+      0,
+      EASTON_RECURVE_SPINE_RANGE_SEQUENCE.length - 1
+    );
+    var range = EASTON_RECURVE_SPINE_RANGE_SEQUENCE[rangeIndex];
+    return {
+      lowerAtaSpine: range[0],
+      upperAtaSpine: range[1],
+      chartLengthIn: chartLengthIn,
+      adjustedDrawWeightLb: adjustedDrawWeightLb,
+      source: "easton-target-recurve"
+    };
+  }
+
+  function commonCandidatesInRange(lowerAta, upperAta) {
+    var candidates = COMMON_ATA_DEFLECTIONS.filter(function (value) {
+      return value >= lowerAta && value <= upperAta;
+    });
+    if (candidates.length) return candidates;
+    var centerAta = (lowerAta + upperAta) / 2;
+    return [COMMON_ATA_DEFLECTIONS.reduce(function (closest, value) {
+      return Math.abs(value - centerAta) < Math.abs(closest - centerAta) ? value : closest;
+    })];
+  }
+
+  function mergeCandidateSpines(target, additions) {
+    additions.forEach(function (value) {
+      if (target.indexOf(value) === -1) target.push(value);
+    });
+    target.sort(function (left, right) { return left - right; });
   }
 
   function parseNumberList(raw) {
@@ -584,13 +634,24 @@
     var goldTipChartReference = lookupGoldTipRecurveChart(
       setup.bowType,
       setup.drawWeightLb,
-      setup.shaftLengthIn,
+      setup.drawLengthIn,
       setup.pointWeightGr
     );
-    if (goldTipChartReference && productAtaCandidates.indexOf(goldTipChartReference.ataSpine) === -1) {
-      productAtaCandidates.push(goldTipChartReference.ataSpine);
-      productAtaCandidates.sort(function (left, right) { return left - right; });
+    var eastonChartRange = lookupEastonRecurveRange(
+      setup.bowType,
+      setup.drawWeightLb,
+      setup.drawLengthIn,
+      setup.pointWeightGr
+    );
+    var chartAtaCandidates = [];
+    if (goldTipChartReference) mergeCandidateSpines(chartAtaCandidates, [goldTipChartReference.ataSpine]);
+    if (eastonChartRange) {
+      mergeCandidateSpines(chartAtaCandidates, commonCandidatesInRange(
+        eastonChartRange.lowerAtaSpine,
+        eastonChartRange.upperAtaSpine
+      ));
     }
+    if (chartAtaCandidates.length) productAtaCandidates = chartAtaCandidates;
 
     return {
       empiricalCenterIn: centerDeflectionIn,
@@ -603,6 +664,7 @@
       finalCenterIn: centerDeflectionIn,
       productAtaCandidates: productAtaCandidates,
       goldTipChartAtaSpine: goldTipChartReference == null ? null : goldTipChartReference.ataSpine,
+      eastonChartRange: eastonChartRange,
       recommendedDynamicMinMm: recommendedDynamicMinMm,
       recommendedDynamicMaxMm: recommendedDynamicMaxMm,
       recommendedDynamicCenterMm: recommendedDynamicCenterMm,

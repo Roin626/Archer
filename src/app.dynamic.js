@@ -333,7 +333,9 @@
     addDefinitionRow(list, "基础裸箭挠度推荐（100 gr 基准）", formatSpineRange(recommendation.empiricalLowerIn, recommendation.empiricalUpperIn));
     addDefinitionRow(list, "常见成品挠度候选", recommendation.productAtaCandidates.map(function (value) {
       return "ATA " + value + (value === recommendation.goldTipChartAtaSpine ? "（Gold Tip 表）" : "");
-    }).join("、") + "（购买前核对厂商规格）");
+    }).join("、") + (recommendation.eastonChartRange
+      ? "（含 Easton 补充区间，购买前核对厂商规格）"
+      : "（购买前核对厂商规格）"));
     if (recommendation.hasClearanceConstraint) {
       addDefinitionRow(list, "避开弓把最低动态侧移", "≥ " + formatNumber(recommendation.requiredDynamicMinMm, 1) + " mm");
     } else {
