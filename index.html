@@ -130,7 +130,6 @@
           <form id="tuningForm" class="setup-grid tool-form">
             <label>弓型<select id="tuningBowType"><option value="olympic_recurve">竞技反曲</option><option value="barebow">光弓</option><option value="compound">复合弓</option><option value="american_hunting">美猎</option><option value="shelfless_traditional" selected>无台传统弓</option></select></label>
             <label>箭杆材料<select id="tuningArrowMaterial"><option value="carbon">碳箭杆（空心）</option><option value="bamboo">拼竹箭杆（空心）</option><option value="wood">木箭杆（实心）</option></select></label>
-            <label>碳箭杆结构<select id="tuningCarbonConstruction"><option value="plain">纯碳箭杆</option><option value="3k">3K 纯碳箭杆</option></select></label>
             <label>实测满拉拉重 lb<input id="tuningDrawWeight" type="number" min="5" step="0.5" value="30"></label>
             <label>实测拉距 in<input id="tuningDrawLength" type="number" min="10" step="0.25" value="28"></label>
             <label>箭杆长 in<input id="tuningShaftLength" type="number" min="10" step="0.25" value="33"></label>
@@ -140,8 +139,6 @@
             <label>出箭点距中心线 mm<input id="tuningArrowPassOffset" type="number" min="0" step="0.5" placeholder="中心出箭填 0；美猎和无台弓需实测"></label>
             <label>裸箭重量 gr（不含箭头）<input id="tuningBareArrowWeight" type="number" min="1" step="1" value="320"></label>
             <label>箭头系统重量 gr<input id="tuningPointWeight" type="number" min="0" step="1" value="100"></label>
-            <label>前端组件类型<select id="tuningFrontComponentType"><option value="manual" selected>手动填写</option><option value="windcut_point">6.2 mm 内径箭杆用破风箭头（外径 7.4 mm）</option><option value="point_seat">常见箭头座</option><option value="internal_point">内插式箭头</option></select></label>
-            <label>前端组件规格<select id="tuningFrontComponentWeight" disabled><option value="">使用手动箭头系统重量</option></select></label>
             <label>裸箭 ATA 静态挠度<input id="tuningAtaSpine" type="number" min="100" max="2000" step="1" value="700"></label>
           </form>
           <div class="toolbar"><button id="tuningButton" type="button">计算动态匹配</button></div>
@@ -196,8 +193,8 @@
       </section>
     </main>
 
-    <script src="src/model.dynamic.js?v=19"></script>
+    <script src="src/model.dynamic.js?v=20"></script>
     <script src="src/storage.js"></script>
-    <script src="src/app.dynamic.js?v=19"></script>
+    <script src="src/app.dynamic.js?v=20"></script>
   </body>
 </html>

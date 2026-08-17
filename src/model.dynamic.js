@@ -225,42 +225,6 @@
       }
     }
   ];
-  var FRONT_COMPONENT_CATALOG = {
-    manual: {
-      label: "手动填写",
-      options: []
-    },
-    windcut_point: {
-      label: "6.2 mm 内径箭杆用破风箭头（外径 7.4 mm）",
-      options: [
-        { weightGr: 100, totalLengthMm: 40, exposedLengthMm: 21 },
-        { weightGr: 125, totalLengthMm: 44, exposedLengthMm: 25 },
-        { weightGr: 150, totalLengthMm: 50.5, exposedLengthMm: 31.5 },
-        { weightGr: 200, totalLengthMm: 60.2, exposedLengthMm: 41.2 },
-        { weightGr: 250, totalLengthMm: 68.6, exposedLengthMm: 49.6 },
-        { weightGr: 300, totalLengthMm: 79.4, exposedLengthMm: 60.4 }
-      ]
-    },
-    point_seat: {
-      label: "常见箭头座",
-      options: [
-        { weightGr: 50, totalLengthMm: 28, exposedLengthMm: null },
-        { weightGr: 100, totalLengthMm: 44.5, exposedLengthMm: null },
-        { weightGr: 150, totalLengthMm: 58.8, exposedLengthMm: null },
-        { weightGr: 200, totalLengthMm: 73.1, exposedLengthMm: null },
-        { weightGr: 300, totalLengthMm: 101.1, exposedLengthMm: null }
-      ]
-    },
-    internal_point: {
-      label: "内插式箭头",
-      options: [
-        { weightGr: 200, totalLengthMm: 58.45, exposedLengthMm: 26.2 },
-        { weightGr: 300, totalLengthMm: 88.5, exposedLengthMm: 27.1 },
-        { weightGr: 400, totalLengthMm: 111.2, exposedLengthMm: 40 },
-        { weightGr: 500, totalLengthMm: 139.5, exposedLengthMm: 40 }
-      ]
-    }
-  };
   var ATA_TEST_LOAD_LB = 1.94;
   var ATA_TEST_SPAN_IN = 28;
   var MM_PER_INCH = 25.4;
@@ -323,92 +287,6 @@
     return values.reduce(function (closest, value) {
       return Math.abs(value - target) < Math.abs(closest - target) ? value : closest;
     });
-  }
-
-  function getFrontComponentOptions(type) {
-    var componentType = String(type || "manual").trim().toLowerCase();
-    var catalog = FRONT_COMPONENT_CATALOG[componentType];
-    if (!catalog) throw new Error("不支持的前端组件类型: " + componentType);
-    return {
-      type: componentType,
-      label: catalog.label,
-      options: catalog.options.map(function (option) {
-        return {
-          weightGr: option.weightGr,
-          totalLengthMm: option.totalLengthMm,
-          exposedLengthMm: option.exposedLengthMm,
-          insertedLengthMm: option.exposedLengthMm == null
-            ? option.totalLengthMm
-            : option.totalLengthMm - option.exposedLengthMm
-        };
-      })
-    };
-  }
-
-  function approximatelyEqual(left, right, tolerance) {
-    return Math.abs(left - right) <= tolerance;
-  }
-
-  function resolveWindcutPointCompatibility(input) {
-    var reasons = [];
-    var allowedSpines = null;
-    var diameterGroup = null;
-    if (input.materialKey !== "carbon") {
-      reasons.push("该规格仅按碳箭杆数据核对");
-    }
-    if (!approximatelyEqual(input.shaftInnerDiameterMm, 6.2, 0.15)) {
-      reasons.push("要求箭杆内径约 6.2 mm");
-    }
-    if (approximatelyEqual(input.shaftDiameterMm, 7.1, 0.15)) {
-      diameterGroup = 7.1;
-      allowedSpines = input.carbonConstruction === "3k" ? [800, 700] : [800, 700, 600];
-    } else if (approximatelyEqual(input.shaftDiameterMm, 7.4, 0.15)) {
-      diameterGroup = 7.4;
-      allowedSpines = input.carbonConstruction === "3k" ? [600, 500, 400, 300] : [500, 400, 300];
-    } else {
-      reasons.push("仅有 7.1 mm 或 7.4 mm 外径适配数据");
-    }
-    if (allowedSpines && allowedSpines.indexOf(input.ataSpine) === -1) {
-      reasons.push("当前箭杆挠度不在该结构和外径的推荐列表");
-    }
-    return {
-      checked: true,
-      compatible: reasons.length === 0,
-      diameterGroupMm: diameterGroup,
-      allowedAtaSpines: allowedSpines || [],
-      reasons: reasons
-    };
-  }
-
-  function resolveFrontComponent(input) {
-    var componentType = String(input.frontComponentType || "manual").trim().toLowerCase();
-    var catalog = getFrontComponentOptions(componentType);
-    if (componentType === "manual") return null;
-    var selectedWeight = positiveNumber(input.frontComponentWeightGr, "前端组件规格");
-    var option = catalog.options.find(function (candidate) {
-      return candidate.weightGr === selectedWeight;
-    });
-    if (!option) {
-      throw new Error(catalog.label + "没有 " + selectedWeight + " gr 规格");
-    }
-    var compatibility = componentType === "windcut_point"
-      ? resolveWindcutPointCompatibility(input)
-      : { checked: false, compatible: null, diameterGroupMm: null, allowedAtaSpines: [], reasons: [] };
-    return {
-      type: componentType,
-      label: catalog.label,
-      nominalWeightGr: option.weightGr,
-      totalLengthMm: option.totalLengthMm,
-      exposedLengthMm: option.exposedLengthMm,
-      insertedLengthMm: option.insertedLengthMm,
-      assembledArrowLengthMm: option.exposedLengthMm == null
-        ? null
-        : input.shaftLengthIn * MM_PER_INCH + option.exposedLengthMm,
-      pointSystemWeightGr: input.pointWeightGr,
-      weightDifferenceGr: input.pointWeightGr - option.weightGr,
-      nominalWeightMatches: approximatelyEqual(input.pointWeightGr, option.weightGr, 0.5),
-      compatibility: compatibility
-    };
   }
 
   function lookupVictoryRecurveChart(bowType, drawWeightLb, shaftLengthIn, pointWeightGr) {
@@ -616,22 +494,6 @@
       innerDiameterMm: shaftInnerDiameterMm,
       ataSpine: input.ataSpine
     });
-    var carbonConstruction = String(input.carbonConstruction || "plain").trim().toLowerCase();
-    if (["plain", "3k"].indexOf(carbonConstruction) === -1) {
-      throw new Error("不支持的碳箭杆结构: " + carbonConstruction);
-    }
-    var ataSpine = Math.round(staticDeflectionIn * 1000);
-    var frontComponent = resolveFrontComponent({
-      frontComponentType: input.frontComponentType,
-      frontComponentWeightGr: input.frontComponentWeightGr,
-      materialKey: materialKey,
-      carbonConstruction: carbonConstruction,
-      shaftDiameterMm: shaftDiameterMm,
-      shaftInnerDiameterMm: shaftInnerDiameterMm,
-      shaftLengthIn: shaftLengthIn,
-      pointWeightGr: pointWeightGr,
-      ataSpine: ataSpine
-    });
     var baseline = genericSpineBaselines[bowType];
     var gripWidthMm = input.gripWidthMm === "" || input.gripWidthMm == null
       ? null
@@ -653,7 +515,6 @@
       baseline: baseline,
       materialKey: materialKey,
       material: material,
-      carbonConstruction: carbonConstruction,
       drawWeightLb: drawWeightLb,
       drawLengthIn: drawLengthIn,
       shaftLengthIn: shaftLengthIn,
@@ -663,7 +524,6 @@
       staticDeflectionIn: staticDeflectionIn,
       shaftDiameterMm: shaftDiameterMm,
       shaftInnerDiameterMm: shaftInnerDiameterMm,
-      frontComponent: frontComponent,
       section: section,
       arrowPassOffsetMm: useGripWidth
         ? gripWidthMm / 2
@@ -905,7 +765,6 @@
       bowLabel: setup.profile.label,
       materialKey: setup.materialKey,
       materialLabel: setup.material.label,
-      carbonConstruction: setup.carbonConstruction,
       drawWeightLb: setup.drawWeightLb,
       drawLengthIn: setup.drawLengthIn,
       shaftLengthIn: setup.shaftLengthIn,
@@ -917,7 +776,6 @@
       ataSpine: Math.round(setup.staticDeflectionIn * 1000),
       shaftDiameterMm: setup.shaftDiameterMm,
       shaftInnerDiameterMm: setup.shaftInnerDiameterMm,
-      frontComponent: setup.frontComponent,
       section: setup.section,
       arrowPassOffsetMm: setup.arrowPassOffsetMm,
       offsetSource: setup.offsetSource,
@@ -1345,7 +1203,6 @@
     calculateStaticSpineScreening: calculateStaticSpineScreening,
     calculateHandleClearanceRanges: calculateHandleClearanceRanges,
     analyzeDynamicSpine: analyzeDynamicSpine,
-    getFrontComponentOptions: getFrontComponentOptions,
     grainsToGrams: grainsToGrams,
     gramsToGrains: gramsToGrains,
     kilogramsToPounds: kilogramsToPounds,
