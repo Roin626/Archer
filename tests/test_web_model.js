@@ -132,6 +132,63 @@ assert.equal(sameSpineThickerWall.current.dynamicDeflectionMinMm, centerShot.cur
 assert.notEqual(sameSpineThickerWall.section.secondMomentMm4, centerShot.section.secondMomentMm4);
 assert.notEqual(sameSpineThickerWall.section.effectiveBendingModulusGpa, centerShot.section.effectiveBendingModulusGpa);
 
+const americanHighPoundInput = {
+  bowType: "american_hunting",
+  drawWeightLb: 58,
+  drawLengthIn: 28,
+  shaftLengthIn: 30,
+  bareArrowWeightGr: 320,
+  pointWeightGr: 100,
+  ataSpine: 340,
+  arrowMaterial: "carbon",
+  shaftDiameterMm: 7.1,
+  shaftInnerDiameterMm: 6.2
+};
+assert.throws(function () {
+  ArcherModel.analyzeDynamicSpine(americanHighPoundInput);
+}, /美猎请填写实测出箭点距中心线/);
+
+const americanHighPound = ArcherModel.analyzeDynamicSpine(Object.assign(
+  { arrowPassOffsetMm: 0 },
+  americanHighPoundInput
+));
+assert.equal(americanHighPound.arrowPassOffsetMm, 0);
+assert.equal(americanHighPound.offsetSource, "manual");
+assert.equal(americanHighPound.recommendation.vendorChartReference.ataSpine, 340);
+assert.equal(americanHighPound.recommendation.vendorChartReference.source, "victory-recurve-2024");
+assert.equal(americanHighPound.recommendation.vendorChartReference.chartLengthIn, 30);
+assert.deepEqual(
+  americanHighPound.recommendation.eastonGpiReferences.filter(function (reference) {
+    return reference.ataSpine === 340;
+  }),
+  [
+    { product: "Sonic 6.0", ataSpine: 340, gpi: 7.8, stockLengthIn: 31.5, source: "easton-official" },
+    { product: "Carbon Legacy", ataSpine: 340, gpi: 10.1, stockLengthIn: 34, source: "easton-official" }
+  ]
+);
+
+assert.deepEqual(
+  [
+    { drawWeightLb: 58, shaftLengthIn: 30 },
+    { drawWeightLb: 62, shaftLengthIn: 32 },
+    { drawWeightLb: 78, shaftLengthIn: 32 }
+  ].map(function (condition) {
+    return ArcherModel.analyzeDynamicSpine(Object.assign({}, americanHighPoundInput, condition, {
+      arrowPassOffsetMm: 0
+    })).recommendation.vendorChartReference.ataSpine;
+  }),
+  [340, 300, 250]
+);
+
+const overlengthVendorReference = ArcherModel.analyzeDynamicSpine(Object.assign(
+  {},
+  americanHighPoundInput,
+  { shaftLengthIn: 33, arrowPassOffsetMm: 0 }
+)).recommendation.vendorChartReference;
+assert.equal(overlengthVendorReference.ataSpine, 340);
+assert.equal(overlengthVendorReference.chartLengthIn, 32);
+assert.equal(overlengthVendorReference.lengthExceedsChart, true);
+
 const traditionalDynamic = ArcherModel.analyzeDynamicSpine({
   bowType: "shelfless_traditional",
   drawWeightLb: 30,

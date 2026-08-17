@@ -334,6 +334,27 @@
     addDefinitionRow(list, "常见成品挠度候选", recommendation.productAtaCandidates.map(function (value) {
       return "ATA " + value;
     }).join("、") + "（购买前核对厂商规格）");
+    if (recommendation.vendorChartReference) {
+      var chartReference = recommendation.vendorChartReference;
+      var chartText = "ATA " + chartReference.ataSpine
+        + "（Victory 2024 反曲弓表：" + chartReference.chartLengthIn + " in / "
+        + chartReference.pointWeightColumnGr + " gr 列）";
+      if (chartReference.lengthExceedsChart) {
+        chartText += "；实测箭杆长 " + formatNumber(chartReference.actualShaftLengthIn, 2)
+          + " in 超出表格 32 in 上限，该值只作为不宜更软的边界";
+      }
+      if (chartReference.pointWeightApproximated) {
+        chartText += "；箭头输入 " + formatNumber(chartReference.actualPointWeightGr, 1)
+          + " gr，按最接近的 " + chartReference.pointWeightColumnGr + " gr 列近似";
+      }
+      addDefinitionRow(list, "Victory 反曲表参考", chartText);
+    }
+    if (recommendation.eastonGpiReferences.length) {
+      addDefinitionRow(list, "EASTON GPI 参考", recommendation.eastonGpiReferences.map(function (reference) {
+        return reference.product + " ATA " + reference.ataSpine + "：" + reference.gpi
+          + " GPI（原厂 " + reference.stockLengthIn + " in）";
+      }).join("；"));
+    }
     if (recommendation.hasClearanceConstraint) {
       addDefinitionRow(list, "避开弓把最低动态侧移", "≥ " + formatNumber(recommendation.requiredDynamicMinMm, 1) + " mm");
     } else {

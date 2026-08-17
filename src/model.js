@@ -187,6 +187,44 @@
     200, 250, 300, 340, 350, 400, 450, 500, 550, 600, 650, 700,
     750, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1800, 2000
   ];
+  var VICTORY_RECURVE_CHART_LENGTHS_IN = [25, 26, 27, 28, 29, 30, 31, 32];
+  var VICTORY_RECURVE_CHART_POINT_WEIGHTS_GR = [100, 125, 150];
+  var VICTORY_RECURVE_CHART_ROWS = [
+    { weightBands: { 100: [30, 34], 125: [30, 34] }, spines: [700, 600, 600, 600, 500, 500, 500, 400] },
+    { weightBands: { 100: [35, 39], 125: [35, 39], 150: [30, 34] }, spines: [600, 600, 600, 500, 500, 500, 400, 400] },
+    { weightBands: { 100: [40, 44], 125: [40, 44], 150: [35, 39] }, spines: [600, 600, 500, 500, 500, 400, 400, 400] },
+    { weightBands: { 100: [45, 49], 125: [45, 49], 150: [40, 44] }, spines: [600, 500, 500, 500, 400, 400, 400, 340] },
+    { weightBands: { 100: [50, 54], 125: [50, 54], 150: [45, 49] }, spines: [500, 500, 500, 400, 400, 400, 340, 340] },
+    { weightBands: { 100: [55, 59], 125: [55, 59], 150: [50, 54] }, spines: [500, 500, 400, 400, 400, 340, 340, 340] },
+    { weightBands: { 100: [60, 64], 125: [60, 64], 150: [55, 59] }, spines: [500, 400, 400, 400, 340, 340, 340, 300] },
+    { weightBands: { 100: [65, 69], 125: [65, 69], 150: [60, 64] }, spines: [400, 400, 400, 340, 340, 340, 300, 300] },
+    { weightBands: { 100: [70, 74], 125: [70, 74], 150: [65, 69] }, spines: [400, 400, 340, 340, 340, 300, 300, 300] },
+    { weightBands: { 100: [75, 79], 125: [75, 79], 150: [70, 74] }, spines: [400, 340, 340, 340, 300, 300, 300, 250] },
+    { weightBands: { 100: [80, 84], 125: [80, 84], 150: [75, 79] }, spines: [340, 340, 300, 300, 250, 250, 250, 250] }
+  ];
+  var EASTON_SHAFT_REFERENCES = [
+    {
+      product: "Sonic 6.0",
+      spines: {
+        250: { gpi: 9.5, stockLengthIn: 32.5 },
+        300: { gpi: 8.8, stockLengthIn: 32 },
+        340: { gpi: 7.8, stockLengthIn: 31.5 },
+        400: { gpi: 7.2, stockLengthIn: 31 },
+        500: { gpi: 6.7, stockLengthIn: 30.5 },
+        600: { gpi: 5.8, stockLengthIn: 30.5 }
+      }
+    },
+    {
+      product: "Carbon Legacy",
+      spines: {
+        340: { gpi: 10.1, stockLengthIn: 34 },
+        400: { gpi: 9.3, stockLengthIn: 34 },
+        500: { gpi: 8.3, stockLengthIn: 34 },
+        600: { gpi: 7.5, stockLengthIn: 34 },
+        700: { gpi: 7.1, stockLengthIn: 34 }
+      }
+    }
+  ];
   var ATA_TEST_LOAD_LB = 1.94;
   var ATA_TEST_SPAN_IN = 28;
   var MM_PER_INCH = 25.4;
@@ -237,6 +275,65 @@
       throw new Error("不支持的弓型: " + bowType);
     }
     return bowType;
+  }
+
+  function requireMeasuredAmericanOffset(bowType, manualOffsetMm) {
+    if (bowType === "american_hunting" && manualOffsetMm == null) {
+      throw new Error("美猎请填写实测出箭点距中心线；中心出箭请明确填写 0");
+    }
+  }
+
+  function nearestValue(values, target) {
+    return values.reduce(function (closest, value) {
+      return Math.abs(value - target) < Math.abs(closest - target) ? value : closest;
+    });
+  }
+
+  function lookupVictoryRecurveChart(bowType, drawWeightLb, shaftLengthIn, pointWeightGr) {
+    if (["olympic_recurve", "barebow", "american_hunting"].indexOf(bowType) === -1) return null;
+    if (shaftLengthIn < VICTORY_RECURVE_CHART_LENGTHS_IN[0]) return null;
+    var pointColumnGr = nearestValue(VICTORY_RECURVE_CHART_POINT_WEIGHTS_GR, pointWeightGr);
+    var row = VICTORY_RECURVE_CHART_ROWS.find(function (candidate) {
+      var band = candidate.weightBands[pointColumnGr];
+      return band && drawWeightLb >= band[0] && drawWeightLb <= band[1];
+    });
+    if (!row) return null;
+    var chartLengthIn = Math.min(
+      VICTORY_RECURVE_CHART_LENGTHS_IN[VICTORY_RECURVE_CHART_LENGTHS_IN.length - 1],
+      Math.max(VICTORY_RECURVE_CHART_LENGTHS_IN[0], Math.round(shaftLengthIn))
+    );
+    var lengthIndex = VICTORY_RECURVE_CHART_LENGTHS_IN.indexOf(chartLengthIn);
+    return {
+      ataSpine: row.spines[lengthIndex],
+      source: "victory-recurve-2024",
+      chartLengthIn: chartLengthIn,
+      actualShaftLengthIn: Number(shaftLengthIn.toFixed(2)),
+      pointWeightColumnGr: pointColumnGr,
+      actualPointWeightGr: Number(pointWeightGr.toFixed(1)),
+      lengthExceedsChart: shaftLengthIn > VICTORY_RECURVE_CHART_LENGTHS_IN[VICTORY_RECURVE_CHART_LENGTHS_IN.length - 1],
+      pointWeightApproximated: pointWeightGr !== pointColumnGr
+    };
+  }
+
+  function buildEastonGpiReferences(spines) {
+    var uniqueSpines = spines.filter(function (spine, index, values) {
+      return values.indexOf(spine) === index;
+    });
+    var references = [];
+    EASTON_SHAFT_REFERENCES.forEach(function (product) {
+      uniqueSpines.forEach(function (spine) {
+        var specification = product.spines[spine];
+        if (!specification) return;
+        references.push({
+          product: product.product,
+          ataSpine: spine,
+          gpi: specification.gpi,
+          stockLengthIn: specification.stockLengthIn,
+          source: "easton-official"
+        });
+      });
+    });
+    return references;
   }
 
   function parseNumberList(raw) {
@@ -404,6 +501,7 @@
     var manualOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null
       ? null
       : nonNegativeNumber(input.arrowPassOffsetMm, "出箭点距中心线");
+    requireMeasuredAmericanOffset(bowType, manualOffsetMm);
     var useGripWidth = bowType === "shelfless_traditional" && gripWidthMm != null && gripWidthMm > 0;
     if (bowType === "shelfless_traditional" && !useGripWidth && manualOffsetMm == null) {
       throw new Error("无台传统弓请测量弓把宽度，或直接填写出箭点距中心线");
@@ -504,6 +602,14 @@
         return Math.abs(value - centerAta) < Math.abs(closest - centerAta) ? value : closest;
       })];
     }
+    var vendorChartReference = lookupVictoryRecurveChart(
+      setup.bowType,
+      setup.drawWeightLb,
+      setup.shaftLengthIn,
+      setup.pointWeightGr
+    );
+    var referenceSpines = productAtaCandidates.slice();
+    if (vendorChartReference) referenceSpines.push(vendorChartReference.ataSpine);
 
     return {
       empiricalCenterIn: centerDeflectionIn,
@@ -515,6 +621,8 @@
       finalUpperIn: empiricalUpperIn,
       finalCenterIn: centerDeflectionIn,
       productAtaCandidates: productAtaCandidates,
+      vendorChartReference: vendorChartReference,
+      eastonGpiReferences: buildEastonGpiReferences(referenceSpines),
       recommendedDynamicMinMm: recommendedDynamicMinMm,
       recommendedDynamicMaxMm: recommendedDynamicMaxMm,
       recommendedDynamicCenterMm: recommendedDynamicCenterMm,
@@ -702,9 +810,11 @@
     var finishedArrowWeightGr = input.finishedArrowWeightGr === "" || input.finishedArrowWeightGr == null
       ? referenceFinishedArrowWeightGr
       : positiveNumber(input.finishedArrowWeightGr, "成品箭重");
-    var arrowPassOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null
-      ? baseline.referenceOffsetMm
+    var manualOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null
+      ? null
       : nonNegativeNumber(input.arrowPassOffsetMm, "出箭点距中心线");
+    requireMeasuredAmericanOffset(bowType, manualOffsetMm);
+    var arrowPassOffsetMm = manualOffsetMm == null ? baseline.referenceOffsetMm : manualOffsetMm;
     var arrowWeightAdjustmentLb = (finishedArrowWeightGr - referenceFinishedArrowWeightGr) / ARROW_WEIGHT_STEP_GR * EFFECTIVE_DRAW_PER_ARROW_WEIGHT_STEP_LB;
     var offsetAdjustmentLb = (baseline.referenceOffsetMm - arrowPassOffsetMm) * EFFECTIVE_DRAW_PER_OFFSET_MM_LB;
     var effectiveDrawWeightLb = Math.max(5, drawWeightLb + arrowWeightAdjustmentLb + offsetAdjustmentLb);
@@ -743,10 +853,12 @@
     var manualOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null
       ? null
       : nonNegativeNumber(input.arrowPassOffsetMm, "出箭点距中心线");
-    var arrowPassOffsetMm = gripWidthMm != null && gripWidthMm > 0
+    requireMeasuredAmericanOffset(bowType, manualOffsetMm);
+    var useGripWidth = bowType === "shelfless_traditional" && gripWidthMm != null && gripWidthMm > 0;
+    var arrowPassOffsetMm = useGripWidth
       ? gripWidthMm / 2
       : manualOffsetMm == null ? baseline.referenceOffsetMm : manualOffsetMm;
-    if (bowType === "shelfless_traditional" && gripWidthMm == null && manualOffsetMm == null) {
+    if (bowType === "shelfless_traditional" && !useGripWidth && manualOffsetMm == null) {
       throw new Error("无台传统弓请测量弓把宽度，或直接填写出箭点距中心线");
     }
     var shaftClearanceIn = shaftLengthIn - drawLengthIn;
@@ -768,7 +880,7 @@
       shaftLengthIn: Number(shaftLengthIn.toFixed(3)),
       shaftClearanceIn: Number(shaftClearanceIn.toFixed(3)),
       arrowPassOffsetMm: Number(arrowPassOffsetMm.toFixed(1)),
-      offsetSource: gripWidthMm != null && gripWidthMm > 0 ? "grip-width-half" : "manual-or-default",
+      offsetSource: useGripWidth ? "grip-width-half" : manualOffsetMm == null ? "bow-default" : "manual",
       centerDeflectionIn: Number(centerDeflectionIn.toFixed(3)),
       lowerDeflectionIn: Number(lowerDeflectionIn.toFixed(3)),
       upperDeflectionIn: Number(upperDeflectionIn.toFixed(3)),
@@ -793,6 +905,7 @@
     var manualOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null
       ? null
       : nonNegativeNumber(input.arrowPassOffsetMm, "出箭点距中心线");
+    requireMeasuredAmericanOffset(bowType, manualOffsetMm);
     var useGripWidth = bowType === "shelfless_traditional" && gripWidthMm != null && gripWidthMm > 0;
     var arrowPassOffsetMm = useGripWidth
       ? gripWidthMm / 2
@@ -860,7 +973,7 @@
       shaftLengthIn: Number(shaftLengthIn.toFixed(3)),
       shaftClearanceIn: Number(shaftClearanceIn.toFixed(3)),
       arrowPassOffsetMm: Number(arrowPassOffsetMm.toFixed(1)),
-      offsetSource: useGripWidth ? "grip-width-half" : "manual-or-default",
+      offsetSource: useGripWidth ? "grip-width-half" : manualOffsetMm == null ? "bow-default" : "manual",
       lateralForceLb: Number(lateralForceLb.toFixed(3)),
       beamLengthFactor: Number(beamLengthFactor.toFixed(3)),
       noHandleClearanceRequired: arrowPassOffsetMm === 0,
@@ -912,9 +1025,11 @@
       ? positiveNumber(input.staticDeflectionIn, "静态挠度")
       : positiveNumber(input.ataSpine, "ATA 静态挠度") / 1000;
     var baseline = genericSpineBaselines[bowType];
-    var arrowPassOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null
-      ? baseline.referenceOffsetMm
+    var manualOffsetMm = input.arrowPassOffsetMm === "" || input.arrowPassOffsetMm == null
+      ? null
       : nonNegativeNumber(input.arrowPassOffsetMm, "出箭点距中心线");
+    requireMeasuredAmericanOffset(bowType, manualOffsetMm);
+    var arrowPassOffsetMm = manualOffsetMm == null ? baseline.referenceOffsetMm : manualOffsetMm;
     var lengthRatio = Math.pow(shaftLengthIn / GENERIC_BASE_SHAFT_LENGTH_IN, 3);
     var requiredEffectiveDrawWeightLb = GENERIC_BASE_DRAW_WEIGHT_LB
       * Math.pow(baseline.deflectionIn * lengthRatio / staticDeflectionIn, 1 / GENERIC_DRAW_WEIGHT_EXPONENT);
@@ -957,7 +1072,8 @@
       bowType: bowType,
       drawWeightLb: drawWeightLb,
       shaftLengthIn: shaftLengthIn,
-      finishedArrowWeightGr: finishedArrowWeightGr
+      finishedArrowWeightGr: finishedArrowWeightGr,
+      arrowPassOffsetMm: input.arrowPassOffsetMm
     });
     return {
       bowType: bowType,

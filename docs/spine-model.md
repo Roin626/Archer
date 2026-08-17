@@ -185,6 +185,21 @@ safe final cut length.
 Measure a long shaft at full draw before cutting. The calculator rejects a
 shaft length shorter than the entered pivot-point draw distance.
 
+## Manufacturer reference data
+
+The web interface keeps manufacturer data separate from the generic model.
+The Victory Archery 2024 recurve chart covers 30-84 lb draw weights, 25-32 inch
+shaft lengths and 100/125/150 gr point columns. Its result is shown as an
+independent cross-check. A shaft longer than 32 inches uses the 32-inch column
+only as a "no softer than" boundary; the application does not extrapolate
+beyond the chart.
+
+Easton GPI values are product-specific weight references, not universal values
+for a given static spine. The current catalogue contains Sonic 6.0 data for ATA
+250-600 and Carbon Legacy data for ATA 340-700. These GPI values are displayed
+next to matching candidates but are not substituted for the user's measured
+bare-arrow weight.
+
 ## References
 
 - ASTM F2031, Standard Test Method for Measurement of Arrow Shaft Static Spine
@@ -200,3 +215,9 @@ shaft length shorter than the entered pivot-point draw distance.
   https://www.bio.vu.nl/thb/users/kooi/kooi97b.pdf
 - Easton arrow FAQ; static/dynamic spine and shaft diameter/wall construction:
   https://eastonarchery.com/faqs/
+- Easton Sonic 6.0 product specifications and GPI table:
+  https://eastonarchery.com/arrows_/sonic-arrow-6-0/
+- Easton Carbon Legacy product specifications and GPI table:
+  https://eastonarchery.com/arrows_/carbon-legacy/
+- Victory Archery Arrow Guide and 2024 recurve spine chart:
+  https://victoryarchery.com/arrow-guide/
